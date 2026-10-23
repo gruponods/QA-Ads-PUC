@@ -242,11 +242,13 @@ def load_plan():
         programs[sig]["creatividad"] = row
     for p in programs.values():
         c = p["creatividad"]
-        listo = (p["estado_estructura"] == "Pauta Activa" and bool(c)
-                 and c["estado"].lower().startswith("implementad"))
-        # sin landing en Estructura todavía no nos compartieron la URL: no se puede activar
-        p["esperando_url"] = listo and not p["landing"]
-        p["debe_correr"] = listo and bool(p["landing"])
+        en_pauta = p["estado_estructura"] == "Pauta Activa"
+        implementado = bool(c) and c["estado"].lower().startswith("implementad")
+        # Sin landing en Estructura: todavía no nos compartieron la URL, no se puede activar.
+        p["esperando_url"] = en_pauta and not p["landing"]
+        # Con landing pero la creatividad no está Implementada: todavía no puede salir.
+        p["creatividad_pendiente"] = en_pauta and bool(p["landing"]) and not implementado
+        p["debe_correr"] = en_pauta and bool(p["landing"]) and implementado
     return programs, discount
 
 
@@ -599,10 +601,16 @@ def run(progress=lambda msg: None, use_api=True):
     for sig, p in sorted(programs.items()):
         rows = by_sigla.get(sig, [])
         act = [r for r in rows if r["estado"] == "ACTIVE"]
-        if not p["debe_correr"] and not act and not p["esperando_url"]:
+        if not p["debe_correr"] and not act and not p["esperando_url"] and not p["creatividad_pendiente"]:
             continue
         if p["esperando_url"] and not act:
             estado = "sin_landing"
+        elif p["creatividad_pendiente"] and not act:
+            estado = "creatividad_pendiente"
+            issues.append({"control": "Programas", "severidad": "warn", "ad_id": "", "ad_name": "", "sigla": sig,
+                           "detalle": "En Estructura está en Pauta Activa y tiene landing, pero en Creatividad 2027 "
+                                      f"no figura Implementado ('{(p['creatividad'] or {}).get('estado') or 'sin fila'}'): "
+                                      "todavía no tiene pauta", "campo": None, "link": "", "gasto7d": 0})
         else:
             estado = "ok" if (p["debe_correr"] and act) else ("pausado" if p["debe_correr"] and rows else
                                                             "sin_anuncios" if p["debe_correr"] else "sobra")
@@ -637,7 +645,7 @@ def run(progress=lambda msg: None, use_api=True):
                                "detalle": f"La fecha de inicio del sheet ({p['inicio']}) ya pasó", "campo": None,
                                "link": "", "gasto7d": 0})
         out_programs.append({**{k: p[k] for k in ("sigla", "programa", "estado_estructura", "inicio", "paises",
-                                                  "debe_correr", "esperando_url", "landing")},
+                                                  "debe_correr", "esperando_url", "creatividad_pendiente", "landing")},
                              "estado": estado, "paises_meta": got, "anuncios": len(act),
                              "anuncios_total": len(rows), "gasto7d": sum(r["gasto7d"] for r in act),
                              "creatividad": p["creatividad"]})
