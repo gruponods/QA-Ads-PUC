@@ -195,6 +195,21 @@ def _cross_placements(ads, issue):
             ad["checks"]["ubicaciones"] = "error"
 
 
+def merge(results):
+    """Suma lecturas {key: resultado} al cache; devuelve cuántas eran nuevas."""
+    cache = load_cache()
+    nuevas = 0
+    for key, r in results.items():
+        if key.startswith("_") or not isinstance(r, dict) or not all(k in r for k in SCHEMA["required"]):
+            continue
+        if key not in cache:
+            nuevas += 1
+        cache[key] = {k: r[k] for k in SCHEMA["required"]}
+    CACHE.parent.mkdir(parents=True, exist_ok=True)
+    CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1), encoding="utf-8")
+    return nuevas
+
+
 def guardar(path):
     """Suma al cache los resultados leídos por Claude: lista de {key, ...campos del SCHEMA}."""
     cache = load_cache()

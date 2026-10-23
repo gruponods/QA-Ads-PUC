@@ -54,6 +54,16 @@ def refresh(use_vision=True):
         lock.release()
 
 
+def apply_readings():
+    """Aplica al reporte actual las lecturas de piezas recibidas, sin consultar Meta."""
+    with lock:
+        try:
+            import vision
+            vision.aplicar_offline()
+        except Exception:
+            traceback.print_exc()
+
+
 def daily_scheduler():
     """Actualiza el reporte todos los días a REFRESH_TIME (y al arrancar si no hay reporte)."""
     if not (qa_engine.DATA / "report.json").exists():
@@ -129,6 +139,16 @@ class Handler(BaseHTTPRequestHandler):
         if not self._authorized():
             return
         p = urlparse(self.path)
+        if p.path == "/api/vision-cache":
+            # Lecturas de piezas hechas por la tarea diaria local (solo con contraseña configurada)
+            if not PASSWORD:
+                return self._send(403, '{"error":"configurá APP_PASSWORD para habilitar la sincronización"}')
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            import vision
+            nuevas = vision.merge(body)
+            if nuevas and (qa_engine.DATA / "report.json").exists():
+                threading.Thread(target=apply_readings, daemon=True).start()
+            return self._send(200, json.dumps({"nuevas": nuevas}))
         if p.path == "/api/refresh":
             if not state["running"]:
                 threading.Thread(target=refresh, args=("vision=0" not in p.query,), daemon=True).start()

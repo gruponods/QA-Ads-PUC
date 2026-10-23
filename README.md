@@ -64,3 +64,20 @@ O doble clic en `Abrir tablero QA.bat`. Para correr solo el motor: `python app/q
 
 El servidor actualiza el reporte al arrancar (si no hay uno) y todos los días a `REFRESH_TIME`.
 También se puede actualizar con el botón **Actualizar** del tablero.
+
+## Lectura de piezas (sin API key en Railway)
+
+Las piezas nuevas (imágenes y láminas de 6 fotogramas de cada video) las lee la tarea diaria
+local de Claude y se envían al tablero publicado:
+
+```bash
+python app/qa_engine.py            # deja data/pending_vision.json
+python app/vision.py dividir 4     # lotes para leer en paralelo
+python app/vision.py guardar-lotes # suma las lecturas al cache
+python app/vision.py aplicar       # las aplica al reporte local
+python app/sync_railway.py         # las envía a Railway (POST /api/vision-cache)
+```
+
+`sync_railway.py` necesita en el `.env` local `RAILWAY_URL` (dominio del servicio) y
+`APP_PASSWORD` (la misma configurada en Railway). Railway aplica las lecturas recibidas al
+reporte sin volver a consultar Meta. El endpoint solo funciona si `APP_PASSWORD` está configurada.
