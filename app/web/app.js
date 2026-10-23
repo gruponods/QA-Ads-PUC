@@ -97,10 +97,9 @@ function issuesTable(list, { showControl = true } = {}) {
       <td>${idCell(i.ad_id || i.campaign_id)}${i.campaign_id ? '<div><span class="tag">Campaña</span></div>' : ''}</td>
       <td><div class="ad-name">${esc(i.ad_name || i.campaign_name || '—')}</div><div class="faint" style="font-size:12px">${esc(i.sigla)}</div></td>
       <td class="detail">${esc(i.detalle)}</td>
-      <td class="num">${i.ad_id ? clp(i.gasto7d) : ''}</td>
       <td>${openBtn(i.link)}</td></tr>`;
   }).join('');
-  return `<div class="table-wrap"><table><thead><tr><th>Estado</th>${showControl ? '<th>Control</th>' : ''}<th></th><th>ID</th><th>Anuncio / campaña</th><th>Detalle</th><th class="num">Gasto 7d</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `<div class="table-wrap"><table><thead><tr><th>Estado</th>${showControl ? '<th>Control</th>' : ''}<th></th><th>ID</th><th>Anuncio / campaña</th><th>Detalle</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 const sevOrder = { error: 0, warn: 1 };
 const sortIssues = (l) => [...l].sort((a, b) => (sevOrder[a.severidad] - sevOrder[b.severidad]) || (b.gasto7d - a.gasto7d));
@@ -238,11 +237,10 @@ function pageProgramas() {
       <td>${esc(p.paises.join(' · ') || '—')}</td>
       <td>${p.anuncios ? `${dot(paisOk ? 'ok' : 'error', p.paises_meta.join(' · ') || '—')}` : '<span class="faint">—</span>'}</td>
       <td class="num">${p.anuncios}<span class="faint"> / ${p.anuncios_total}</span></td>
-      <td class="num">${clp(p.gasto7d)}</td>
       <td class="num">${errBySigla[p.sigla] ? `<span class="check error">${errBySigla[p.sigla]}</span>` : '<span class="check ok"><i class="ti ti-circle-check"></i></span>'}</td></tr>`;
   }).join('');
   return `${pageHead('Planificación vs. Meta', 'Programas que deben estar <em>en pauta</em>.', 'Pauta Activa en Estructura 2027 + Implementado en Creatividad 2027. Hacé clic en un programa para ver sus anuncios.')}
-    <div class="table-wrap"><table><thead><tr><th>Estado</th><th>Sigla</th><th>Programa</th><th>Inicio</th><th>Países plan</th><th>Países Meta</th><th class="num">Anuncios activos</th><th class="num">Gasto 7d</th><th class="num">Errores</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    <div class="table-wrap"><table><thead><tr><th>Estado</th><th>Sigla</th><th>Programa</th><th>Inicio</th><th>Países plan</th><th>Países Meta</th><th class="num">Anuncios activos</th><th class="num">Errores</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 function pageAnuncios() {
@@ -264,7 +262,7 @@ function pageAnuncios() {
       <td><div class="ad-name">${esc(a.name)}</div><div class="faint" style="font-size:12px">${a.estado === 'ACTIVE' ? '' : esc(a.estado.replace(/_/g, ' ').toLowerCase()) + ' · '}${esc(a.conjunto)}</div></td>
       <td><span class="tag ${a.formato === 'video' ? 'cat' : 'soft'}">${esc(a.formato === '?' ? '—' : a.formato)}</span></td>
       ${CHECK_COLS.map(([k]) => `<td class="center">${a.estado === 'ACTIVE' ? checkIcon(a.checks[k] || 'na') : checkIcon('na')}</td>`).join('')}
-      <td class="num">${clp(a.gasto7d)}</td><td>${openBtn(a.link)}</td></tr>`;
+      <td>${openBtn(a.link)}</td></tr>`;
   }).join('');
   return `${pageHead('Anuncios · Campañas 2027', 'Cada anuncio, <em>control por control</em>.', 'Hacé clic en un anuncio para ver sus piezas, el copy contra el sheet y la URL.')}
     <div class="toolbar">
@@ -273,8 +271,8 @@ function pageAnuncios() {
       <div class="segmented" id="mode">${[['activos', 'Activos'], ['errores', 'Con errores'], ['pausados', 'Pausados'], ['todos', 'Todos']].map(([k, l]) => `<button data-mode="${k}" class="${st.mode === k ? 'on' : ''}">${l}</button>`).join('')}</div>
       <span class="muted" style="margin-left:auto;font-size:14px">${list.length} anuncios</span>
     </div>
-    <div class="table-wrap"><table><thead><tr><th></th><th>ID anuncio</th><th>Anuncio</th><th>Formato</th>${CHECK_COLS.map(([, l]) => `<th class="center">${l}</th>`).join('')}<th class="num">Gasto 7d</th><th></th></tr></thead>
-    <tbody>${body || `<tr><td colspan="14"><div class="empty">No hay anuncios con estos filtros.</div></td></tr>`}</tbody></table></div>`;
+    <div class="table-wrap"><table><thead><tr><th></th><th>ID anuncio</th><th>Anuncio</th><th>Formato</th>${CHECK_COLS.map(([, l]) => `<th class="center">${l}</th>`).join('')}<th></th></tr></thead>
+    <tbody>${body || `<tr><td colspan="13"><div class="empty">No hay anuncios con estos filtros.</div></td></tr>`}</tbody></table></div>`;
 }
 
 function pageMejoras() {
@@ -284,10 +282,10 @@ function pageMejoras() {
   const body = ads.map((a) => `<tr class="clickable tone-error" data-ad="${esc(a.id)}">
     <td>${idCell(a.id)}</td><td><div class="ad-name">${esc(a.name)}</div></td>
     <td><div class="chips">${a.mejoras.map((m) => `<span class="chip">${esc(m.label)}</span>`).join('')}</div></td>
-    <td class="num">${clp(a.gasto7d)}</td><td>${openBtn(a.link)}</td></tr>`).join('');
+    <td>${openBtn(a.link)}</td></tr>`).join('');
   return `${pageHead('Mejoras automáticas de Meta', `${ads.length} anuncios para <em>corregir</em>.`, 'En Ads Manager: abrí el anuncio → sección Contenido → "Mejoras de Advantage+ creative" → desactivá las que figuran acá. Meta no permite editar las mejoras de un anuncio publicado desde la API sin crear un creativo nuevo.')}
     <div class="chips" style="margin-bottom:16px">${Object.entries(count).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="chip">${esc(k)} · ${v}</span>`).join('')}</div>
-    <div class="table-wrap"><table><thead><tr><th>ID anuncio</th><th>Anuncio</th><th>Mejoras activadas</th><th class="num">Gasto 7d</th><th></th></tr></thead><tbody>${body || `<tr><td colspan="5"><div class="empty">Ningún anuncio activo tiene mejoras automáticas.</div></td></tr>`}</tbody></table></div>`;
+    <div class="table-wrap"><table><thead><tr><th>ID anuncio</th><th>Anuncio</th><th>Mejoras activadas</th><th></th></tr></thead><tbody>${body || `<tr><td colspan="4"><div class="empty">Ningún anuncio activo tiene mejoras automáticas.</div></td></tr>`}</tbody></table></div>`;
 }
 
 function pageAlertas() {
@@ -330,7 +328,7 @@ function openAd(id) {
     <div class="dialog-head"><div>
         <div class="kicker">${esc(a.sigla || 'Sin sigla')} · ${esc(p?.programa || '')}</div>
         <h2>${esc(a.name)}</h2>
-        <div class="muted" style="font-size:14px;margin-top:6px">${idCell(a.id)} · ${esc(a.campana)} · ${esc(a.conjunto)} · Países: ${esc(a.paises.join(', ') || '—')} · Gasto 7d ${clp(a.gasto7d)}</div></div>
+        <div class="muted" style="font-size:14px;margin-top:6px">${idCell(a.id)} · ${esc(a.campana)} · ${esc(a.conjunto)} · Países: ${esc(a.paises.join(', ') || '—')}</div></div>
       <div style="display:flex;gap:8px;align-items:center">${openBtn(a.link)}<button class="icon-btn" id="close" title="Cerrar"><i class="ti ti-x"></i></button></div></div>
     <div class="check-strip">${CHECK_COLS.map(([k, l]) => `<span class="dot ${a.checks[k] || 'off'}">${l}</span>`).join('')}</div>
     ${myIssues.length ? `<div class="field"><div class="field-label">Observaciones</div><ul class="issue-list">${myIssues.map((i) => `<li>${dot(i.severidad, i.control)}<span class="detail">${esc(i.detalle)}</span></li>`).join('')}</ul></div>` : ''}
