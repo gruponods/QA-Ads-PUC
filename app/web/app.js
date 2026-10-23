@@ -108,22 +108,25 @@ function exportJira(list, nombre) {
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const slug = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
   const fecha = new Date(R.generado).toLocaleDateString('es-CL');
-  const head = ['Summary', 'Issue Type', 'Priority', 'Labels', 'Labels', 'Description', 'ID Meta', 'Link Ads Manager'];
+  // Una fila por item, sin saltos de línea, separado por ";" (se abre bien en Excel en español;
+  // en Jira: Importar desde CSV → delimitador ";"). Summary/Issue Type/Priority/Labels/Description
+  // son los nombres que Jira reconoce solos; el resto son columnas de referencia.
+  const head = ['Summary', 'Issue Type', 'Priority', 'Labels', 'Labels', 'Description',
+    'Programa', 'Control', 'Severidad', 'Tipo', 'ID Meta', 'Nombre en Meta', 'Detalle', 'Link Ads Manager', 'Fecha reporte'];
   const rows = list.map((i) => {
-    const obj = i.ad_name || i.campaign_name || i.sigla;
+    const tipo = i.ad_id ? 'Anuncio' : i.campaign_id ? 'Campaña' : 'Programa';
+    const nombre = i.ad_name || i.campaign_name || (R.programas.find((p) => p.sigla === i.sigla) || {}).programa || i.sigla;
+    const id = i.ad_id || i.campaign_id || '';
+    const sev = i.severidad === 'error' ? 'Error' : 'Para revisar';
     const summary = `[${i.sigla || 'QA'}] ${i.control}: ${i.detalle}`.slice(0, 250);
-    const desc = [
-      `*Control:* ${i.control} (${i.severidad === 'error' ? 'error' : 'para revisar'})`,
-      `*Detalle:* ${i.detalle}`,
-      i.ad_id ? `*Anuncio:* ${i.ad_name} — ID ${i.ad_id}` : '',
-      i.campaign_id ? `*Campaña:* ${i.campaign_name} — ID ${i.campaign_id}` : '',
-      !i.ad_id && !i.campaign_id ? `*Programa:* ${obj}` : '',
-      i.link ? `*Abrir en Ads Manager:* ${i.link}` : '',
-      `_Reporte QA Meta Ads del ${fecha}_`,
-    ].filter(Boolean).join('\n');
-    return [summary, 'Task', i.severidad === 'error' ? 'High' : 'Medium', 'QA-Meta-Ads', slug(i.control), desc, i.ad_id || i.campaign_id || '', i.link || ''];
+    const desc = [`${i.control} (${sev.toLowerCase()}): ${i.detalle}.`, `${tipo}: ${nombre}${id ? ` (ID ${id})` : ''}.`,
+      i.link ? `Ads Manager: ${i.link}` : '', `Reporte QA Meta Ads del ${fecha}.`].filter(Boolean).join(' ');
+    // "\t" delante del ID: Excel lo toma como texto y no lo muestra como 5,2565E+13 (Jira lo recorta)
+    return [summary, 'Task', i.severidad === 'error' ? 'High' : 'Medium', 'QA-Meta-Ads', slug(i.control), desc,
+      i.sigla, i.control, sev, tipo, id ? `\t${id}` : '', nombre, i.detalle, i.link || '', fecha]
+      .map((v) => String(v ?? '').replace(/[\r\n]+/g, ' '));
   });
-  const csv = '﻿' + [head, ...rows].map((r) => r.map(q).join(',')).join('\r\n');
+  const csv = '﻿' + [head, ...rows].map((r) => r.map(q).join(';')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   a.download = `${nombre}-${R.generado.slice(0, 10)}.csv`;
