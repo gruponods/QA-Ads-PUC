@@ -49,7 +49,8 @@ abreviado o partido en líneas). Transcribí los precios y porcentajes exactamen
 Si un dato no aparece en la pieza, dejá la lista vacía o el texto vacío; no lo inventes."""
 TIPO_IMG = "Mirá la pieza publicitaria (imagen)."
 TIPO_VIDEO = ("La imagen es una lámina con 6 fotogramas del video publicitario, en orden de izquierda a "
-              "derecha y de arriba abajo; el último es el cierre del video. Tomá en cuenta todos los fotogramas.")
+              "derecha y de arriba abajo; el último es el cierre del video. Tomá en cuenta todos los fotogramas. "
+              "Los videos son generales: no llevan precio ni fecha, así que no lo reportes como problema.")
 
 
 SEED = Path(__file__).resolve().parent / "seed" / "vision_cache.json"
@@ -169,10 +170,23 @@ def _evaluate(ad, v, res, p, discount, issue, es_video):
         state = "error"
         issue("Pieza", "error", ref, ad["sigla"],
               f"{fuente.capitalize()}{where} muestra {', '.join(o + '%' for o in otros)} y el descuento vigente es {discount}%", "pieza")
-    if res.get("observaciones", "").strip():
+    obs = res.get("observaciones", "").strip()
+    if es_video:
+        obs = sin_precio_fecha(obs)
+    if obs:
         state = "warn" if state == "ok" else state
-        issue("Pieza", "warn", ref, ad["sigla"], f"Revisar {fuente}{where}: {res['observaciones'].strip()}", "pieza")
+        issue("Pieza", "warn", ref, ad["sigla"], f"Revisar {fuente}{where}: {obs}", "pieza")
     ad["checks"]["pieza"] = state
+
+
+def sin_precio_fecha(obs):
+    """Los videos son generales: no llevan precio ni fecha. Quita de la observación las
+    frases que solo dicen que faltan."""
+    frases = re.split(r"(?<=[.;])\s+", obs)
+    keep = [f for f in frases
+            if not (re.search(r"precio|fecha|inicio|descuento", f, re.I)
+                    and re.search(r"\b(sin|no (se )?(ve|ven|muestra|muestran|aparece|aparecen|hay))\b|ni ", f, re.I))]
+    return " ".join(keep).strip()
 
 
 def _cross_placements(ads, issue):
