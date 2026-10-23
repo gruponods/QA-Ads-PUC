@@ -229,7 +229,7 @@ function pageProgramas() {
   R.issues.forEach((i) => { if (i.severidad === 'error' && i.sigla) errBySigla[i.sigla] = (errBySigla[i.sigla] || 0) + 1; });
   const label = { ok: ['ok', 'En pauta'], pausado: ['error', 'Pausado'], sin_anuncios: ['error', 'Sin anuncios'], sobra: ['error', 'No debería estar activo'], sin_landing: ['off', 'Esperando URL'], creatividad_pendiente: ['warn', 'Creatividad pendiente'] };
   const body = rows.map((p) => {
-    const [sev, txt] = label[p.estado];
+    const [sev, txt] = label[p.estado] || ['off', p.estado];
     const paisOk = p.paises.every((c) => p.paises_meta.includes(c)) && p.paises_meta.every((c) => p.paises.includes(c));
     return `<tr class="clickable tone-${sev === 'error' ? 'error' : ''}" data-sigla="${esc(p.sigla)}" ${p.estado === 'sin_landing' ? 'data-tip="Sin landing en Estructura 2027: todavía no compartieron la URL, no se puede activar."'
       : p.estado === 'creatividad_pendiente' ? 'data-tip="Pauta Activa y con landing, pero la creatividad todavía no está Implementada en Creatividad 2027."' : ''}>

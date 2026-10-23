@@ -621,12 +621,12 @@ def run(progress=lambda msg: None, use_api=True):
                 for r in rows:
                     camps.setdefault(r["campana_id"], r)
                 for cid, r in camps.items():
-                    estado = {"PAUSED": "pausada", "CAMPAIGN_PAUSED": "pausada", "ARCHIVED": "archivada",
-                              "ADSET_PAUSED": "activa pero con los conjuntos pausados"}.get(
+                    estado_camp = {"PAUSED": "pausada", "CAMPAIGN_PAUSED": "pausada", "ARCHIVED": "archivada",
+                                   "ADSET_PAUSED": "activa pero con los conjuntos pausados"}.get(
                         r["estado_campana"] if r["estado_campana"] != "ACTIVE" else r["estado"], "sin anuncios activos")
                     issues.append({"control": "Programas", "severidad": "error", "ad_id": "", "ad_name": "",
                                    "campaign_id": cid, "campaign_name": r["campana"], "sigla": sig,
-                                   "detalle": f"El programa debería estar en pauta y la campaña está {estado}",
+                                   "detalle": f"El programa debería estar en pauta y la campaña está {estado_camp}",
                                    "campo": None, "link": camp_link + cid, "gasto7d": 0})
             elif not rows:
                 issues.append({"control": "Programas", "severidad": "error", "ad_id": "", "ad_name": "", "sigla": sig,
