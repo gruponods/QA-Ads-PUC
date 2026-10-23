@@ -66,8 +66,13 @@ def apply_readings():
 
 def daily_scheduler():
     """Actualiza el reporte todos los días a REFRESH_TIME (y al arrancar si no hay reporte)."""
-    if not (qa_engine.DATA / "report.json").exists():
+    for _ in range(8):  # sin reporte todavía: reintentar cada 15 min (p. ej. si Meta limita llamadas)
+        if (qa_engine.DATA / "report.json").exists():
+            break
         refresh()
+        if not (qa_engine.DATA / "report.json").exists():
+            state["next_run"] = (dt.datetime.now(TZ) + dt.timedelta(minutes=15)).isoformat(timespec="minutes")
+            time.sleep(900)
     hh, mm = (int(x) for x in REFRESH_TIME.split(":"))
     while True:
         now = dt.datetime.now(TZ)

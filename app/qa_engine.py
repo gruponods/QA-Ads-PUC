@@ -106,8 +106,10 @@ class Meta:
                         url = url.replace(m.group(0), f"{m.group(1)}{max(10, int(m.group(2)) // 2)}")
                     time.sleep(3 * (attempt + 1))
                     continue
-                if "too many calls" in body.lower() and attempt < tries - 1:
-                    time.sleep(90 * (attempt + 1))  # límite de llamadas de la cuenta: esperar y reintentar
+                limited = ("too many calls" in body.lower() or "request limit" in body.lower()
+                           or '"is_transient":true' in body)
+                if limited and attempt < tries - 1:
+                    time.sleep(90 * (attempt + 1))  # límite de llamadas de Meta: esperar y reintentar
                     continue
                 raise RuntimeError(f"Meta API {e.code}: {body[:400]}") from None
 
