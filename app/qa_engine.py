@@ -493,15 +493,12 @@ def run(progress=lambda msg: None, use_api=True):
 
         # 3. contenido
         if c:
-            exp_copy = norm(c["copy"])
-            ck["copy"] = ck["url"] = ck["descuento"] = "ok"
+            # El copy puede variar respecto de Creatividad 2027 (variaciones de paid media):
+            # no es error; la comparación queda visible en el detalle del anuncio.
+            ck["url"] = ck["descuento"] = "ok"
             for v in variants:
                 body = v["copy"] or ""
                 where = f" ({v['ubicacion']})" if len(variants) > 1 else ""
-                if exp_copy and strip_discount(body) != strip_discount(exp_copy):
-                    if exp_copy not in norm(body):
-                        ck["copy"] = "error"
-                        issue("Copy", "error", a, sig, f"El copy{where} no coincide con Creatividad 2027", "copy")
                 if f"{discount}%" not in body.replace(" %", "%"):
                     ck["descuento"] = "error"
                     issue("Descuento", "error", a, sig, f"El copy{where} no menciona el {discount}% de descuento")
@@ -523,13 +520,10 @@ def run(progress=lambda msg: None, use_api=True):
                 for k in ("ref", "utm_source", "utm_medium", "utm_campaign"):
                     if c[k] and q.get(k) != c[k]:
                         errs.append(f"{k}={q.get(k) or '—'} (esperado {c[k]})")
+                # utm_term: img / video; con número (video2, img3) es otra pieza diferenciada, es válido
                 term = q.get("utm_term") or ""
-                if fmt == "img" and term != "img":
-                    errs.append(f"utm_term={term or '—'} (esperado img)")
-                elif fmt == "video" and not term.startswith("video"):
-                    errs.append(f"utm_term={term or '—'} (esperado video)")
-                elif fmt == "video" and term != "video":
-                    warns.append(f"utm_term={term} (el sheet usa 'video')")
+                if fmt in ("img", "video") and not re.fullmatch(rf"{fmt}\d*", term):
+                    errs.append(f"utm_term={term or '—'} (esperado {fmt})")
                 lnd = landing.get(url)
                 if lnd and (lnd["status"] >= 400 or lnd["status"] == 0):
                     errs.append(f"la landing responde {lnd['status'] or 'sin conexión'}")
@@ -541,13 +535,12 @@ def run(progress=lambda msg: None, use_api=True):
                 if warns:
                     ck["url"] = ck["url"] if ck["url"] == "error" else "warn"
                     issue("URL", "warn", a, sig, f"URL{where}: " + "; ".join(warns), "url")
-            # consistencia entre ubicaciones: mismo programa, copy y landing en Stories/Reels y Feed
+            # consistencia entre ubicaciones: misma landing en Stories/Reels y Feed (el programa de la
+            # pieza lo compara vision.py; el copy puede variar a propósito)
             if len(variants) > 1:
                 ck["ubicaciones"] = "ok"
                 paths = {urllib.parse.urlparse(v["url"] or "").path.rstrip("/") for v in variants}
-                copies = {strip_discount(v["copy"]) for v in variants}
-                titles = {norm(v["titulo"]) for v in variants}
-                for label, vals in (("landing", paths), ("copy", copies), ("título", titles)):
+                for label, vals in (("landing", paths),):
                     if len(vals) > 1:
                         ck["ubicaciones"] = "error"
                         issue("Ubicaciones", "error", a, sig,

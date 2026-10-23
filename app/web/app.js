@@ -14,16 +14,15 @@ const PAGES = [
 const CONTROLS = [
   { key: 'Programas', icon: 'school', title: 'Programas en pauta', desc: 'Lo activo en Meta contra Estructura 2027 (Pauta Activa) y Creatividad 2027 (Implementado).' },
   { key: 'País', icon: 'world', title: 'País', desc: 'Los conjuntos de anuncios segmentan los países tildados en Estructura (Chile / Perú).' },
-  { key: 'Copy', icon: 'align-left', title: 'Copy', desc: 'El texto de cada versión es el de Creatividad 2027.' },
   { key: 'Descuento', icon: 'discount', title: 'Descuento', desc: 'El copy menciona el descuento vigente y el plazo no está vencido.' },
-  { key: 'URL', icon: 'link', title: 'URL y UTM', desc: 'Landing, ref y UTMs como en Creatividad 2027; la landing responde.' },
+  { key: 'URL', icon: 'link', title: 'URL y UTM', desc: 'Landing, ref y UTMs como en Creatividad 2027 (video2, img2… son válidos); la landing responde.' },
   { key: 'Pieza', icon: 'photo-scan', title: 'Pieza: programa y precio', desc: 'La IA lee la pieza: que sea del programa y que el precio sea el del sheet.' },
-  { key: 'Ubicaciones', icon: 'layout-columns', title: 'Ubicaciones', desc: 'Stories/Reels y Feed muestran el mismo programa, con el mismo copy y la misma landing.' },
+  { key: 'Ubicaciones', icon: 'layout-columns', title: 'Ubicaciones', desc: 'Stories/Reels y Feed muestran el mismo programa y llevan a la misma landing.' },
   { key: 'Mejoras automáticas', icon: 'wand', title: 'Mejoras automáticas', desc: 'Anuncios con mejoras de Meta activadas que hay que quitar.' },
   { key: 'Alertas', icon: 'alert-triangle', title: 'Alertas', desc: 'Sin gasto, sin pieza vertical, fechas pasadas, anuncios rechazados.' },
 ];
 const CHECK_COLS = [
-  ['programa', 'Programa'], ['pais', 'País'], ['copy', 'Copy'], ['descuento', 'Dcto.'],
+  ['programa', 'Programa'], ['pais', 'País'], ['descuento', 'Dcto.'],
   ['url', 'URL'], ['pieza', 'Pieza'], ['ubicaciones', 'Ubic.'], ['mejoras', 'Mejoras'],
 ];
 const visionRead = () => (R.vision && R.vision.leidas) || 0;
@@ -104,6 +103,36 @@ function issuesTable(list, { showControl = true } = {}) {
 const sevOrder = { error: 0, warn: 1 };
 const sortIssues = (l) => [...l].sort((a, b) => (sevOrder[a.severidad] - sevOrder[b.severidad]) || (b.gasto7d - a.gasto7d));
 
+// ------------------------------------------------------------ exportación para Jira (CSV del importador)
+function exportJira(list, nombre) {
+  const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const slug = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  const fecha = new Date(R.generado).toLocaleDateString('es-CL');
+  const head = ['Summary', 'Issue Type', 'Priority', 'Labels', 'Labels', 'Description', 'ID Meta', 'Link Ads Manager'];
+  const rows = list.map((i) => {
+    const obj = i.ad_name || i.campaign_name || i.sigla;
+    const summary = `[${i.sigla || 'QA'}] ${i.control}: ${i.detalle}`.slice(0, 250);
+    const desc = [
+      `*Control:* ${i.control} (${i.severidad === 'error' ? 'error' : 'para revisar'})`,
+      `*Detalle:* ${i.detalle}`,
+      i.ad_id ? `*Anuncio:* ${i.ad_name} — ID ${i.ad_id}` : '',
+      i.campaign_id ? `*Campaña:* ${i.campaign_name} — ID ${i.campaign_id}` : '',
+      !i.ad_id && !i.campaign_id ? `*Programa:* ${obj}` : '',
+      i.link ? `*Abrir en Ads Manager:* ${i.link}` : '',
+      `_Reporte QA Meta Ads del ${fecha}_`,
+    ].filter(Boolean).join('\n');
+    return [summary, 'Task', i.severidad === 'error' ? 'High' : 'Medium', 'QA-Meta-Ads', slug(i.control), desc, i.ad_id || i.campaign_id || '', i.link || ''];
+  });
+  const csv = '﻿' + [head, ...rows].map((r) => r.map(q).join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `${nombre}-${R.generado.slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`${list.length} items exportados para Jira`, 'download');
+}
+const jiraBtn = (scope) => `<button class="btn" data-jira="${scope}"><i class="ti ti-file-export"></i>Exportar para Jira</button>`;
+
 // ------------------------------------------------------------ páginas
 const SEV_RANK = { error: 2, warn: 1, ok: 0 };
 const ring = (pct, size = 140) => {
@@ -114,7 +143,7 @@ const ring = (pct, size = 140) => {
     <text x="50%" y="50%" class="ring-num" dominant-baseline="central" text-anchor="middle">${pct}%</text></svg>`;
 };
 const MATRIX_COLS = CONTROLS.map((c) => c.key);
-const MATRIX_SHORT = { Programas: 'Programa', 'País': 'País', Copy: 'Copy', Descuento: 'Dcto.', URL: 'URL', Pieza: 'Pieza', Ubicaciones: 'Ubic.', 'Mejoras automáticas': 'Mejoras', Alertas: 'Alertas' };
+const MATRIX_SHORT = { Programas: 'Programa', 'País': 'País', Descuento: 'Dcto.', URL: 'URL', Pieza: 'Pieza', Ubicaciones: 'Ubic.', 'Mejoras automáticas': 'Mejoras', Alertas: 'Alertas' };
 
 function pageResumen() {
   const act = activeAds();
@@ -208,7 +237,7 @@ function pageResumen() {
     <div class="section"><div class="section-head"><h2>Programa × control</h2>
       <div class="legend"><span class="m-cell ok sm"><i class="ti ti-check"></i></span>OK <span class="m-cell warn sm"><i class="ti ti-alert-circle"></i></span>Revisar <span class="m-cell error sm"><i class="ti ti-x"></i></span>Error <span class="m-cell na sm"><i class="ti ti-minus"></i></span>Sin anuncios activos</div></div>
       <div class="table-wrap"><table class="matrix"><thead><tr><th></th>${MATRIX_COLS.map((k) => `<th>${esc(MATRIX_SHORT[k])}</th>`).join('')}</tr></thead><tbody>${matrix}</tbody></table></div></div>
-    <div class="section"><div class="section-head"><h2>Para corregir</h2><span class="muted" style="font-size:14px">${top.length} errores</span></div>
+    <div class="section"><div class="section-head"><h2>Para corregir</h2><div style="display:flex;gap:12px;align-items:center"><span class="muted" style="font-size:14px">${top.length} errores</span>${jiraBtn('todo')}</div></div>
       ${issuesTable(shown)}
       ${top.length > 10 ? `<div style="margin-top:14px;text-align:center"><button class="btn" data-ver-todo="1">${st.verTodo ? 'Ver solo los 10 primeros' : `Ver los ${top.length} errores`}</button></div>` : ''}</div>`;
 }
@@ -216,7 +245,7 @@ function pageResumen() {
 function pageControl() {
   const c = CONTROLS.find((x) => x.key === st.control);
   const l = sortIssues(issuesOf(st.control));
-  return `${pageHead('Control', esc(c.title) + '.', esc(c.desc), `<button class="btn" data-go="resumen"><i class="ti ti-arrow-left"></i>Volver al resumen</button>`)}
+  return `${pageHead('Control', esc(c.title) + '.', esc(c.desc), `<div style="display:flex;gap:10px">${jiraBtn('control')}<button class="btn" data-go="resumen"><i class="ti ti-arrow-left"></i>Volver al resumen</button></div>`)}
     ${['Pieza', 'Ubicaciones'].includes(st.control) ? pendingBanner() : ''}
     ${issuesTable(l, { showControl: false })}`;
 }
@@ -290,7 +319,7 @@ function pageMejoras() {
 
 function pageAlertas() {
   const l = sortIssues(R.issues.filter((i) => i.control === 'Alertas' || i.severidad === 'warn'));
-  return `${pageHead('Alertas', 'Puntos para <em>revisar</em>.', 'No son errores contra el sheet, pero pueden dejar algo desactualizado o sin rendimiento.')}${issuesTable(l)}`;
+  return `${pageHead('Alertas', 'Puntos para <em>revisar</em>.', 'No son errores contra el sheet, pero pueden dejar algo desactualizado o sin rendimiento.', jiraBtn('revisar'))}${issuesTable(l)}`;
 }
 
 // ------------------------------------------------------------ detalle de anuncio
@@ -309,7 +338,7 @@ function openAd(id) {
       <div>${(v.frames_img || v.local_img) ? `<img src="/${esc(v.frames_img || v.local_img)}" alt="">` : '<div class="thumb" style="width:220px;height:220px"></div>'}
         <div class="faint" style="font-size:12px;margin-top:6px">${v.video_id ? (v.frames_img ? '6 fotogramas del video, del inicio al cierre' : 'Miniatura del video') : 'Imagen'}</div></div>
       <div><h3>${esc(v.ubicacion)}</h3>
-        <div class="field"><div class="field-label">Copy en Meta ${c ? '· comparado con Creatividad 2027' : ''}</div>
+        <div class="field"><div class="field-label">Copy en Meta ${c ? '· variación respecto de Creatividad 2027 (no es error)' : ''}</div>
           ${c ? `<div class="copy-box compare"><div><div class="field-label">Creatividad 2027</div>${expHtml}</div><div><div class="field-label">Meta (sin la frase de descuento)</div>${gotHtml}</div></div>
           <div class="faint" style="font-size:12px;margin-top:6px">Frase de descuento en Meta: «${esc(((v.copy || '').match(/[^.!\n]*\d{1,2}\s*%[^.!\n]*[.!]?/) || ['—'])[0].trim())}» · vigente ${esc(disc)}%</div>` : `<div class="copy-box">${esc(v.copy)}</div>`}
         </div>
@@ -373,6 +402,13 @@ document.addEventListener('click', (e) => {
   if (g) return go(g.dataset.go);
   const ctl = e.target.closest('[data-control]');
   if (ctl) { const k = ctl.dataset.control; return k === 'Mejoras automáticas' ? go('mejoras') : k === 'Alertas' ? go('alertas') : go('resumen', { control: k }); }
+  const jb = e.target.closest('[data-jira]');
+  if (jb) {
+    const sc = jb.dataset.jira;
+    const list = sc === 'todo' ? sortIssues(R.issues) : sc === 'revisar' ? sortIssues(R.issues.filter((i) => i.control === 'Alertas' || i.severidad === 'warn'))
+      : sortIssues(issuesOf(st.control));
+    return exportJira(list, sc === 'control' ? `qa-meta-${st.control.toLowerCase().replace(/\s+/g, '-')}` : sc === 'revisar' ? 'qa-meta-revisar' : 'qa-meta-todo');
+  }
   const vt = e.target.closest('[data-ver-todo]');
   if (vt) { st.verTodo = !st.verTodo; return render(); }
   const sgo = e.target.closest('[data-sigla-go]');

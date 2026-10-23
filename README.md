@@ -11,13 +11,16 @@ la campaña y su link a Ads Manager. Diseño: sistema NODS (`design-system/`).
 |---|---|
 | Programas en pauta | Activo en Meta vs. *Pauta Activa* (Estructura) + *Implementado* (Creatividad) + landing asignada. Sin landing = "Esperando URL". Errores por campaña. |
 | País | Países del conjunto de anuncios vs. Chile / Perú tildados en Estructura |
-| Copy | Texto de cada versión (Feed, Stories/Reels) vs. Creatividad 2027 |
 | Descuento | El copy menciona el descuento vigente y el plazo no está vencido |
-| URL y UTM | Landing, ref y UTMs vs. Creatividad 2027; la landing responde |
+| URL y UTM | Landing, ref y UTMs vs. Creatividad 2027 (`video2`, `img2`… son piezas diferenciadas, válidas); la landing responde |
 | Pieza | Programa y precio sobre la imagen / fotogramas del video vs. Creatividad 2027 |
-| Ubicaciones | Stories/Reels y Feed con el mismo programa, copy, título y landing |
+| Ubicaciones | Stories/Reels y Feed con el mismo programa y la misma landing |
 | Mejoras automáticas | Mejoras de Advantage+ creative activadas |
 | Alertas | Sin gasto, sin pieza vertical, fechas de inicio pasadas, anuncios rechazados |
+
+El copy puede variar respecto de Creatividad 2027 (variaciones de paid media): no es error; la
+comparación se ve en el detalle de cada anuncio. Los errores y puntos a revisar se exportan en CSV
+para importar en Jira (botón **Exportar para Jira**).
 
 ## Estructura
 
