@@ -1,0 +1,7 @@
+/* Nods — Iconography
+   Single icon system: Tabler Icons (outline webfont). Uniform 2px stroke, 24px grid.
+   Usage: <i class="ti ti-{name}"></i>  e.g. <i class="ti ti-rocket"></i>
+   Browse names: https://tabler.io/icons  (use the outline/default set only). */
+@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.33.0/dist/tabler-icons.min.css');
+
+.ti{font-style:normal;line-height:1;display:inline-flex;vertical-align:middle}

@@ -1,0 +1,40 @@
+<!-- @dsCard group="Components" viewport="700x560" name="Forms — Input · Select · Checkbox · Switch" subtitle="App form controls: hairline fields, blue focus, no rings or shadows" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:30px 34px}.grp{margin-bottom:28px}.grp:last-child{margin-bottom:0}.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;margin:0 0 14px}.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Input, Select, Checkbox, Switch } = window.NodsDesignSystem_bde349;
+function Demo() {
+  return (<div>
+<div className="grp"><p className="lbl">Input</p><div className="g2">
+<Input label="Email" icon="mail" placeholder="nombre@escuela.edu" />
+<Input label="Nombre del aula" defaultValue="Matemática 3°A" hint="Visible para tus alumnos." />
+<Input label="Contraseña" type="password" defaultValue="123" error="Mínimo 8 caracteres." />
+<Input label="Deshabilitado" disabled defaultValue="No editable" />
+</div></div>
+<div className="grp"><p className="lbl">Select</p><div className="g2">
+<Select label="Nivel" options={['Secundaria','Primaria','Superior']} />
+<Select label="Filtro (sm)" size="sm" placeholder="Todos los niveles" options={['Primaria','Secundaria']} />
+</div></div>
+<div className="grp"><p className="lbl">Checkbox · Switch</p><div className="row" style={{gap:'28px',alignItems:'flex-start'}}>
+<Checkbox label="Recordarme" defaultChecked />
+<Checkbox label="Resumen semanal" description="Un email cada lunes." />
+<Checkbox label="Deshabilitado" disabled />
+<Switch label="Notificaciones" defaultChecked />
+<Switch label="Modo oculto" />
+</div></div></div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

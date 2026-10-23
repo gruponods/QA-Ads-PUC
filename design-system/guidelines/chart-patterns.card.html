@@ -1,0 +1,31 @@
+<!-- @dsCard group="Colors" viewport="700x230" name="Chart patterns (tramas)" subtitle="Optional 2nd encoding on top of the chart palette — print, color-blind, projections" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}
+.c{padding:28px}
+.row{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.sw{height:96px;border-radius:12px 12px 0 0;border:1.5px solid var(--nods-blue);border-bottom:none;box-sizing:border-box;background:#fff}
+.base{height:1px;background:var(--gray-200)}
+.n{font-size:13px;font-weight:500;margin-top:10px}
+.k{font-size:12px;color:var(--gray-500)}
+.note{font-size:12px;color:var(--gray-500);margin-top:18px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="c">
+<div class="row">
+<div><div class="sw" style="background:var(--nods-blue)"></div><div class="base"></div><div class="n">1 · Sólido</div><div class="k">solid</div></div>
+<div><div class="sw" style="background-image:var(--pattern-diagonal)"></div><div class="base"></div><div class="n">2 · Diagonal</div><div class="k">diagonal</div></div>
+<div><div class="sw" style="background-image:var(--pattern-dots);background-size:var(--pattern-dots-size)"></div><div class="base"></div><div class="n">3 · Puntos</div><div class="k">dots</div></div>
+<div><div class="sw" style="background-image:var(--pattern-cross)"></div><div class="base"></div><div class="n">4 · Cruzado</div><div class="k">cross</div></div>
+<div><div class="sw" style="background-image:var(--pattern-horizontal)"></div><div class="base"></div><div class="n">5 · Horizontal</div><div class="k">horizontal</div></div>
+<div><div class="sw" style="background:var(--nods-blue-050)"></div><div class="base"></div><div class="n">6 · Tinte</div><div class="k">tint</div></div>
+</div>
+<div class="note">Opcional: usá tramas además del color de la paleta para impresión en B/N, accesibilidad o valores proyectados (semanas futuras).</div>
+</div>
+</body>
+</html>

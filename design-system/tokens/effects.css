@@ -1,0 +1,19 @@
+/* Nods — Shape, border & elevation tokens
+   Flat and clean: shapes are ALWAYS rounded, and there are NO shadows, anywhere.
+   Separation between surfaces is done with hairline light-gray borders. */
+:root{
+  /* Corner radii */
+  --radius-sm: 8px;
+  --radius-card-sm: 12px;   /* compact cards / inputs */
+  --radius-card: 16px;      /* default card */
+  --radius-lg: 16px;
+  --radius-xl: 24px;        /* large panels / photo containers */
+  --radius-photo: 16px;     /* imagery in rounded containers */
+  --radius-pill: 999px;     /* tags, chips, buttons */
+
+  /* Borders */
+  --border-width: 1px;
+
+  /* Elevation — intentionally none. Flat design; separate with borders. */
+  --shadow-none: none;
+}

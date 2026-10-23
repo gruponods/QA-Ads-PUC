@@ -1,0 +1,41 @@
+<!-- @dsCard group="Components" viewport="700x330" name="Motion — Reveal · CountUp" subtitle="Entrance fade + rise with stagger, counting numbers, growing bars — click Repetir" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:26px 30px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Reveal, CountUp, Button, ProgressBar } = window.NodsDesignSystem_bde349;
+const box = { border: '1px solid var(--gray-200)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 };
+function Demo() {
+  const [k, setK] = React.useState(0);
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}><Button size="sm" variant="secondary" icon="refresh" onClick={() => setK(k + 1)}>Repetir</Button></div>
+      <div key={k} style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+        {[['Alumnos activos', 142], ['Leads del mes', 2640], ['Cumplimiento', 119]].map(([l, v], i) => (
+          <Reveal key={l} index={i}>
+            <div style={box}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{l}</span>
+              <span style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-0.02em', color: i === 2 ? 'var(--accent)' : 'var(--text)' }}><CountUp value={v} />{i === 2 ? '%' : ''}</span>
+              <ProgressBar value={[62, 78, 100][i]} size="sm" />
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: '16px 0 0' }}>Entrada 420 ms · cubic-bezier(.2,0,0,1) · escalonado 70 ms · sin rebote · respeta “reducir movimiento”.</p>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

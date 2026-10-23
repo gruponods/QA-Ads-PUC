@@ -1,0 +1,32 @@
+<!-- @dsCard group="Components" viewport="700x380" name="Compare — VersusTable" subtitle="Head-to-head KPIs (e.g. Instagram vs Facebook): butterfly bars, solid vs pattern, winner + advantage" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:26px 30px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { VersusTable } = window.NodsDesignSystem_bde349;
+const pct = (v) => `${v.toLocaleString('es-AR', { maximumFractionDigits: 2 })}%`;
+const money = (v) => `$${v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <VersusTable left={{ label: 'Instagram', icon: 'brand-instagram' }} right={{ label: 'Facebook', icon: 'brand-facebook' }}
+    metrics={[
+      { label: 'Alcance', left: 412000, right: 268000 },
+      { label: 'Engagement', left: 4.8, right: 1.9, format: pct },
+      { label: 'CTR', left: 0.72, right: 1.62, format: pct },
+      { label: 'Leads', left: 1460, right: 1180 },
+      { label: 'Costo por lead', left: 6.2, right: 5.1, lower: true, format: money },
+      { label: 'Inversión', left: 9052, right: 6018, neutral: true, format: money },
+    ]} />
+);
+</script>
+</body>
+</html>

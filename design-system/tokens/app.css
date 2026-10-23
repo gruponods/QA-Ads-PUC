@@ -1,0 +1,17 @@
+/* Nods — Web app tokens
+   Same rules as the deck (white canvas, blue accent, Space Grotesk, no shadows),
+   plus density + shell dimensions for application UI. */
+:root{
+  --app-sidebar-w: 248px;
+  --app-topbar-h: 64px;
+  --app-content-max: 1240px;
+  --app-pad: 32px;
+
+  --control-h-sm: 36px;
+  --control-h: 44px;
+  --control-h-lg: 52px;
+
+  --overlay: rgba(10,10,10,0.40);   /* dialog scrim — flat, no blur */
+  --duration-fast: 150ms;           /* @kind other */
+  --ease-standard: cubic-bezier(.2,0,0,1); /* @kind other */
+}

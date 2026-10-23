@@ -1,0 +1,42 @@
+<!-- @dsCard group="Components" viewport="700x1260" name="Maps — GeoMap · DotGlobe" subtitle="Countries of the Americas from real Natural Earth boundaries: blue scale or pattern categories" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:28px 32px}.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;margin:0 0 12px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { GeoMap, DotGlobe } = window.NodsDesignSystem_bde349;
+const STUDENTS = { '032': 980000, '484': 620000, '170': 410000, '152': 290000, '604': 240000, '076': 180000, '858': 120000, '218': 95000, '600': 60000, '068': 45000, '188': 38000, '320': 30000, '591': 26000, '214': 22000, '840': 15000 };
+const STATUS = { '032': 'op', '484': 'op', '170': 'op', '152': 'op', '604': 'op', '858': 'op', '076': 'pilot', '218': 'pilot', '600': 'pilot', '068': 'soon', '862': 'soon' };
+const CATS = [{ key: 'op', label: 'En operación', pattern: 'solid' }, { key: 'pilot', label: 'Piloto', pattern: 'diagonal' }, { key: 'soon', label: 'Próximamente', pattern: 'dots' }];
+function Demo() {
+  return (
+    <div>
+      <p className="lbl">Dot globe · login / portada</p>
+      <div style={{ display: 'flex', gap: '24px', alignItems: 'center', marginBottom: '28px' }}>
+        <div style={{ flex: '0 0 300px', background: 'var(--surface-muted)', border: '1px solid var(--gray-200)', borderRadius: '20px', padding: '20px' }}><DotGlobe size={260} /></div>
+        <div data-nods-theme="dark" style={{ flex: '0 0 300px', background: 'var(--bg)', borderRadius: '20px', padding: '20px' }}><DotGlobe size={260} /></div>
+      </div>
+      <p className="lbl">Escala · toda América</p>
+      <GeoMap data={STUDENTS} valueLabel="alumnos" legendTitle="Alumnos activos" style={{ maxWidth: '520px', margin: '0 auto' }} />
+      <div className="g2">
+        <div><p className="lbl">Categorías con tramas · Sudamérica</p><GeoMap region="south" mode="category" categories={CATS} data={STATUS} /></div>
+        <div><p className="lbl">Escala · Centroamérica y Caribe</p><GeoMap region="central" data={STUDENTS} valueLabel="alumnos" legend={false} /></div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

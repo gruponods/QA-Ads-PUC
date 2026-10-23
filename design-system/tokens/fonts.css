@@ -1,0 +1,5 @@
+/* Nods — Fonts
+   Space Grotesk is the SINGLE typeface of the system (weights 300/400/500/700).
+   Loaded from Google Fonts CDN. To self-host, replace this @import with local
+   @font-face rules pointing at woff2 binaries in /assets/fonts/. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');

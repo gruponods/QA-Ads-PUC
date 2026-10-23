@@ -1,0 +1,37 @@
+<!-- @dsCard group="Colors" viewport="700x200" name="Category colors" subtitle="6 vivid tones for category chips only — never for status or data" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}
+.c{padding:26px 28px;display:flex;flex-direction:column;gap:16px}
+.row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.s{display:flex;flex-direction:column;gap:8px}
+.chip{display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;padding:7px 10px;border-radius:999px}
+.k{font-size:11px;color:var(--gray-500);text-align:center}
+.dark{background:#15171B;border-radius:14px;padding:12px}
+</style>
+</head>
+<body>
+<div class="c">
+  <div class="row">
+    <div class="s"><span class="chip" style="background:var(--cat-1-soft);color:var(--cat-1)">Matemática</span><span class="k">--cat-1 · azul</span></div>
+    <div class="s"><span class="chip" style="background:var(--cat-2-soft);color:var(--cat-2)">Lengua</span><span class="k">--cat-2 · cian</span></div>
+    <div class="s"><span class="chip" style="background:var(--cat-3-soft);color:var(--cat-3)">Ciencias</span><span class="k">--cat-3 · violeta</span></div>
+    <div class="s"><span class="chip" style="background:var(--cat-4-soft);color:var(--cat-4)">Historia</span><span class="k">--cat-4 · rosa</span></div>
+    <div class="s"><span class="chip" style="background:var(--cat-5-soft);color:var(--cat-5)">Inglés</span><span class="k">--cat-5 · verde</span></div>
+    <div class="s"><span class="chip" style="background:var(--cat-6-soft);color:var(--cat-6)">Arte</span><span class="k">--cat-6 · naranja</span></div>
+  </div>
+  <div class="row dark" data-nods-theme="dark">
+    <span class="chip" style="background:var(--cat-1-soft);color:var(--cat-1)">Matemática</span>
+    <span class="chip" style="background:var(--cat-2-soft);color:var(--cat-2)">Lengua</span>
+    <span class="chip" style="background:var(--cat-3-soft);color:var(--cat-3)">Ciencias</span>
+    <span class="chip" style="background:var(--cat-4-soft);color:var(--cat-4)">Historia</span>
+    <span class="chip" style="background:var(--cat-5-soft);color:var(--cat-5)">Inglés</span>
+    <span class="chip" style="background:var(--cat-6-soft);color:var(--cat-6)">Arte</span>
+  </div>
+</div>
+</body>
+</html>

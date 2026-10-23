@@ -1,0 +1,10 @@
+.env
+.venv/
+data/
+reportes/
+.claude/
+__pycache__/
+*.pyc
+node_modules/
+design-system/exports/
+design-system/uploads/

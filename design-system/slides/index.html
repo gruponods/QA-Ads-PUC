@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>NODS — Slide templates</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  html,body{margin:0;background:var(--gray-050);color:var(--ink);font-family:var(--font-sans)}
+  .page{max-width:880px;margin:0 auto;padding:56px 40px 96px}
+  .head{margin:0 0 40px}
+  .head img{height:34px;display:block;margin-bottom:22px}
+  .head h1{margin:0 0 8px;font-weight:700;font-size:30px;letter-spacing:-.01em}
+  .head p{margin:0;font-size:16px;color:var(--gray-500);line-height:1.55;max-width:60ch}
+  .slide-lbl{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--gray-400)}
+  .slide-lbl span{width:20px;height:2px;background:var(--nods-blue);border-radius:2px}
+  .frame{margin-bottom:44px}
+  .shell{border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;background:#fff}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="head">
+    <img src="../assets/logo-nods-blue.png" alt="NODS — Technology for Education">
+    <h1>Plantillas de slides</h1>
+    <p>Diez layouts reutilizables construidos sobre el sistema de diseño NODS. Fondo blanco, azul de acento, Space Grotesk. Cada slide es un componente de <code>window.NodsDesignSystem</code>.</p>
+  </div>
+  <div id="root"></div>
+</div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../_ds_bundle.js"></script>
+<script type="text/babel">
+const NS = window.NodsDesignSystem_bde349;
+const S = 0.625;
+const SLIDES = [
+  ['Portada', 'CoverSlide'],
+  ['Agenda / índice', 'AgendaSlide'],
+  ['Divisor de sección — claro', 'SectionSlide'],
+  ['Problema / solución', 'ProblemSolutionSlide'],
+  ['Grid de tarjetas', 'CardGridSlide'],
+  ['Texto + gráfico', 'TextChartSlide'],
+  ['Big number + foto', 'MetricPhotoSlide'],
+  ['Product screenshot', 'ProductShotSlide'],
+  ['Timeline / proceso', 'TimelineSlide'],
+  ['Roadmap', 'RoadmapSlide'],
+  ['Comparativa', 'ComparisonSlide'],
+  ['Pricing', 'PricingSlide'],
+  ['Logos de clientes', 'LogoGridSlide'],
+  ['Equipo / about us', 'TeamSlide'],
+  ['Divisor de sección — oscuro', 'SectionDividerDark'],
+  ['Cierre / CTA', 'ClosingSlide'],
+];
+function Frame({ label, name }) {
+  const Comp = NS[name];
+  return (
+    <div className="frame">
+      <div className="slide-lbl"><span></span>{label}</div>
+      <div className="shell" style={{ width: 1280 * S, height: 720 * S }}>
+        <div style={{ transform: `scale(${S})`, transformOrigin: 'top left', width: 1280, height: 720 }}>
+          {Comp ? <Comp /> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <>{SLIDES.map(([label, name]) => <Frame key={name} label={label} name={name} />)}</>
+);
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA Meta Ads · Ingeniería UC</title>
+<link rel="stylesheet" href="/ds/styles.css">
+<link rel="stylesheet" href="/web/app.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <img class="logo" src="/ds/assets/logo-nods-blue.png" alt="NODS — Technology for Education">
+    <span class="nav-label">QA Meta Ads</span>
+    <nav id="nav"></nav>
+    <div class="sidebar-foot">
+      <div class="acct-name">EP Ingeniería UC</div>
+      <div class="acct-meta" id="acct-meta">Campañas 2027</div>
+      <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1zLZYqlRMpLiTZhsZIVwFC-4T3SezFE6HqMUcQO0ZmKY/edit" target="_blank" rel="noopener">
+        <i class="ti ti-table"></i> Abrir sheet de planificación</a>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" id="crumbs"></nav>
+      <span class="updated" id="updated"></span>
+      <label class="switch-wrap" id="vision-wrap" title="Lee precio y programa sobre cada pieza con IA">
+        <input type="checkbox" id="vision-toggle" checked>
+        <span class="switch"></span><span>Leer piezas con IA</span>
+      </label>
+      <button class="btn btn-primary" id="refresh"><i class="ti ti-refresh"></i><span>Actualizar</span></button>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+<div class="scrim" id="scrim" hidden><div class="dialog" id="dialog" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
+<script src="/web/app.js"></script>
+</body>
+</html>

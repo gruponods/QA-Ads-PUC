@@ -1,0 +1,55 @@
+<!-- @dsCard group="Components" viewport="700x1700" name="KPI — Funnel · Gauge · ProgressRing · BudgetChart · PivotTable · HeatmapGrid" subtitle="Compliance gauges, execution rings, real vs budget, ISO-week pivots and heat-map grids" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:28px 32px}.grp{margin-bottom:28px}.grp:last-child{margin-bottom:0}.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;margin:0 0 14px}.row{display:flex;gap:28px;align-items:center;flex-wrap:wrap}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { FunnelChart, Gauge, ProgressRing, BudgetChart, PivotTable, HeatmapGrid, ThresholdValue } = window.NodsDesignSystem_bde349;
+const money = (v) => '$' + v.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const W = [['S28',905,880,116],['S29',812,870,119],['S30',1010,1080,124],['S31',1260,1120,93],['S32',1240,1000,149],['S33',1105,1050,171],['S34',1060,1060,168],['S35',1190,1100,160],['S36',1120,1020,143],['S37',1255,1130,200],['S38',1310,1150,207],['S39',1270,1110,200],['S40',null,1200],['S41',null,1050],['S42',null,1150]].map(([label,real,budget,exec]) => ({label,real,budget,exec}));
+function Demo() {
+  return (
+    <div>
+      <div className="grp"><p className="lbl">Funnel · pasá el mouse para ver caídas</p>
+        <FunnelChart labelWidth={160} valueWidth={80} barHeight={38} stages={[{label:'Visitas',value:48200,icon:'world'},{label:'Leads',value:4820,icon:'user-plus'},{label:'Contactados',value:3610,icon:'phone'},{label:'Entrevista',value:1390,icon:'messages'},{label:'Inscriptos',value:486,icon:'school'}]} />
+      </div>
+      <div className="grp row" style={{alignItems:'flex-start'}}>
+        <div><p className="lbl">Gauge</p><div className="row"><Gauge value={72.4} label="vs presupuesto" width={200} /><Gauge value={167} label="Ejecución vs presupuesto" width={200} overflowLabel="+67% sobre presupuesto" /></div></div>
+        <div><p className="lbl">Progress ring</p><div className="row" style={{gap:'10px'}}><ProgressRing value={84} tone="ok" /><ProgressRing value={96} tone="ok" /><ProgressRing value={116} tone="warn" /><ProgressRing value={171} tone="risk" /><ProgressRing value={null} /><ProgressRing value={64} size={48} /></div></div>
+      </div>
+      <div className="grp"><p className="lbl">Budget chart · real vs budget</p><BudgetChart data={W} current="S40" height={170} colWidth={34} /></div>
+      <div className="grp"><p className="lbl">Heatmap · secuencial (leads por día y hora)</p>
+        <HeatmapGrid rowLabelWidth={40} cellHeight={28} totals legendLow="Menos leads" legendHigh="Más leads"
+          rows={['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d => ({key:d,label:d}))}
+          cols={[9,10,11,12,13,14,15,16,17,18,19].map(h => ({key:String(h),label:h+'h'}))}
+          values={Object.fromEntries(['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((d,i) => [d, Object.fromEntries([9,10,11,12,13,14,15,16,17,18,19].map(h => [String(h), Math.round((i>4?20:55) * (0.4 + Math.exp(-((h-11)**2)/6) + 0.8*Math.exp(-((h-19)**2)/4)))]))]))} />
+      </div>
+      <div className="grp"><p className="lbl">Heatmap · divergente (cumplimiento vs 100%)</p>
+        <HeatmapGrid scale="diverging" center={100} rowLabelWidth={150} format={(v) => String(v)}
+          rows={[{key:'a',label:'Customer Experience'},{key:'b',label:'IA y negocios'},{key:'c',label:'Salud 4.0'},{key:'d',label:'TEA y TDAH'}]}
+          cols={['S34','S35','S36','S37','S38','S39'].map(k => ({key:k,label:k}))}
+          values={{a:{S34:104,S35:98,S36:110,S37:101,S38:95,S39:107},b:{S34:92,S35:96,S36:89,S37:101,S38:99,S39:94},c:{S34:78,S35:71,S36:69,S37:74,S38:66,S39:null},d:{S34:131,S35:138,S36:126,S37:142,S38:129,S39:135}}} />
+      </div>
+      <div className="grp"><p className="lbl">Pivot table · semanas ISO</p>
+        <PivotTable rowLabel="Programa" firstColWidth={220}
+          groups={[{key:'38',label:'S38',sub:'14–20 sep'},{key:'39',label:'S39',sub:'21–27 sep'}]}
+          measures={[{key:'cpl',label:'Costo por lead',render:(v) => <ThresholdValue value={v} warn={9} bad={11} higherIsBetter={false} format={money} />,format:money},{key:'leads',label:'Leads'}]}
+          rows={[{id:'a',label:'Customer Experience e IA',cells:{'38':{cpl:8.67,leads:88},'39':{cpl:7.91,leads:93}}},{id:'b',label:'IA y negocios',cells:{'38':{cpl:9.00,leads:181},'39':{cpl:9.83,leads:172}}},{id:'c',label:'Salud 4.0',cells:{'38':{cpl:10.85,leads:47},'39':{cpl:15.07,leads:33}}}]}
+          total={{cells:{'38':{cpl:6.87,leads:1125},'39':{cpl:7.31,leads:1084}}}} />
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

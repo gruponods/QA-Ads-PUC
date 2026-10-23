@@ -1,0 +1,86 @@
+<!-- @dsCard group="Components" viewport="700x660" name="Core — Kicker · Tag · Button · IconButton · Card · Divider" subtitle="Eyebrows, pills, buttons, cards and rules — flat, hairline borders, no shadows" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}
+  #root{padding:34px 36px}
+  .grp{margin-bottom:30px}
+  .grp:last-child{margin-bottom:0}
+  .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;margin:0 0 14px}
+  .row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Kicker, Tag, Button, IconButton, Card, Divider, Icon } = window.NodsDesignSystem_bde349;
+function Demo() {
+  return (
+    <div>
+      <div className="grp">
+        <p className="lbl">Kicker</p>
+        <div className="row" style={{gap:'28px'}}>
+          <Kicker>Plataforma NODS</Kicker>
+          <Kicker accent={false}>Capítulo 02</Kicker>
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Tag</p>
+        <div className="row">
+          <Tag>Outline</Tag>
+          <Tag variant="soft" icon="sparkles">IA</Tag>
+          <Tag variant="solid">Nuevo</Tag>
+          <Tag variant="neutral">Beta</Tag>
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Button</p>
+        <div className="row">
+          <Button variant="primary" iconRight="arrow-right">Agendar demo</Button>
+          <Button variant="secondary" icon="download">Informe</Button>
+          <Button variant="ghost" size="sm">Ver más</Button>
+          <Button variant="primary" disabled>Disabled</Button>
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Icon button</p>
+        <div className="row">
+          <IconButton icon="bell" label="Notificaciones" badge />
+          <IconButton icon="search" label="Buscar" variant="outline" />
+          <IconButton icon="plus" label="Agregar" variant="primary" />
+          <IconButton icon="dots-vertical" label="Más" size="sm" />
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Divider</p>
+        <div className="row" style={{gap:'24px'}}>
+          <Divider variant="accent" length="56px" />
+          <Divider length="220px" />
+          <Icon name="point" size={8} color="var(--gray-300)" />
+        </div>
+      </div>
+      <div className="grp">
+        <p className="lbl">Card</p>
+        <div className="row" style={{alignItems:'stretch'}}>
+          <Card icon="rocket" title="Onboarding guiado" style={{flex:1}} footer={<Tag variant="soft">15 min</Tag>}>
+            Activación en minutos, sin fricción para el docente.
+          </Card>
+          <Card icon="chart-bar" title="Analíticas en vivo" interactive style={{flex:1}}>
+            Métricas de avance por aula, alumno y contenido.
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!-- @dsCard group="Components" viewport="700x700" name="Feedback — Alert · StatusDot · Dialog" subtitle="Messages, status dots and flat modal dialogs" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:30px 34px}.grp{margin-bottom:28px}.grp:last-child{margin-bottom:0}.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;margin:0 0 14px}.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Alert, StatusDot, Dialog, Button, Input } = window.NodsDesignSystem_bde349;
+function Demo() {
+  return (<div>
+<div className="grp"><p className="lbl">Alert</p><div className="g2">
+<Alert tone="info" title="Nueva versión disponible">Hay nuevos contenidos de estadística.</Alert>
+<Alert tone="success" title="Cambios guardados" onClose={() => {}}>Tu perfil se actualizó.</Alert>
+<Alert tone="warning" title="3 entregas pendientes">Vencen hoy a las 18:00.</Alert>
+<Alert tone="error" title="No se pudo sincronizar">Reintentá en unos minutos.</Alert>
+</div></div>
+<div className="grp"><p className="lbl">Status dot</p><div className="row" style={{gap:'28px'}}>
+<StatusDot tone="ok">Al día</StatusDot><StatusDot tone="warn">Atención</StatusDot><StatusDot tone="risk">En riesgo</StatusDot><StatusDot tone="neutral">Cerrada</StatusDot><StatusDot tone="accent">En curso</StatusDot>
+</div></div>
+<div className="grp"><p className="lbl">Dialog (inline)</p>
+<div style={{background:'var(--gray-100)',borderRadius:'16px',padding:'24px',display:'flex',justifyContent:'center'}}>
+<Dialog inline width={440} onClose={() => {}} title="Nueva tarea" description="Se publica en el aula y los alumnos reciben un aviso."
+ footer={<><Button variant="ghost" size="sm">Cancelar</Button><Button size="sm" icon="check">Crear tarea</Button></>}>
+<Input label="Título" placeholder="Ej. Práctica de ecuaciones" />
+</Dialog></div></div></div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

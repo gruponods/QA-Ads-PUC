@@ -1,0 +1,107 @@
+/* Nods — Color tokens
+   RULES (non-negotiable):
+   • Background is ALWAYS pure white. Never dark fills, gradients, or textures
+     (exception: 1–2 dedicated dark section dividers using --divider-* below).
+   • Body text is ink black. NODS blue is an ACCENT only — keywords in a headline,
+     big numbers, icons, accent lines. Never set paragraph copy in blue.
+   • If blue covers more than ~15% of a slide's surface, it is too much. */
+:root{
+  /* Brand ---------------------------------------------------------------- */
+  --nods-blue: #1946E3;        /* primary accent */
+  --nods-blue-600: #1238B5;    /* hover / press / pressed accent */
+  --nods-blue-700: #0E2B8C;    /* deepest interactive */
+  --nods-blue-050: #EEF2FE;    /* faintest tint — subtle highlight only */
+  --nods-blue-deep: #0B1B4D;   /* deep navy — dark section dividers */
+
+  /* Ink & surface -------------------------------------------------------- */
+  --white: #FFFFFF;
+  --black: #000000;
+  --ink: #0A0A0A;              /* default text */
+
+  /* Neutral ramp --------------------------------------------------------- */
+  --gray-900: #111827;
+  --gray-700: #374151;
+  --gray-500: #6B7280;         /* subtitles / muted copy */
+  --gray-400: #9CA3AF;         /* faint / captions */
+  --gray-300: #D1D5DB;
+  --gray-200: #E5E7EB;         /* hairline borders */
+  --gray-100: #F3F4F6;         /* muted surface (logo walls) */
+  --gray-050: #F9FAFB;
+
+  /* Data states — muted, for ↑↓ chart variations ONLY. Never as fills. ---- */
+  --data-up: #12A16B;          /* muted green  ▲ */
+  --data-warn: #F2A516;        /* muted amber  = */
+  --data-down: #E5484D;        /* muted red    ▼ */
+
+  /* Semantic aliases ----------------------------------------------------- */
+  --bg: var(--white);
+  --surface: var(--white);
+  --surface-muted: var(--gray-050);
+  --surface-logo: var(--gray-100);
+
+  --text: var(--ink);
+  --text-muted: var(--gray-500);
+  --text-faint: var(--gray-400);
+  --text-on-dark: var(--white);
+  --text-on-dark-muted: rgba(255,255,255,0.72);
+
+  --accent: var(--nods-blue);
+  --accent-strong: var(--nods-blue-600);
+  --accent-soft: var(--nods-blue-050);
+
+  --border-hairline-color: var(--gray-200);
+  --border-hairline: 1px solid var(--gray-200);
+  --border-on-dark: 1px solid rgba(255,255,255,0.16); /* @kind other */
+
+  --accent-fill: var(--nods-blue);          /* solid fills with white text (buttons, solid tags, checks) */
+  --accent-fill-hover: var(--nods-blue-600);
+
+  /* Data-state text (AA on white) + soft tints for conditional formatting / row alerts */
+  --data-up-fg: #0E7A51;
+  --data-warn-fg: #9A6500;
+  --data-down-fg: #C42F35;
+  --data-up-soft: #E3F6EE;
+  --data-warn-soft: #FDF3DC;
+  --data-down-soft: #FDE8E8;
+
+  /* Category chips — vivid, only for labelling categories (never for status or data) */
+  --cat-1: #1946E3; --cat-1-soft: #E8EEFF;   /* blue */
+  --cat-2: #0B7F96; --cat-2-soft: #DDF6FA;   /* cyan */
+  --cat-3: #7C3AED; --cat-3-soft: #F1EAFE;   /* violet */
+  --cat-4: #D6336C; --cat-4-soft: #FDE7EF;   /* pink */
+  --cat-5: #23863A; --cat-5-soft: #E5F6E9;   /* green */
+  --cat-6: #C94A08; --cat-6-soft: #FFEEE3;   /* orange */
+
+  /* Sequential blue ramp (maps, heat cells) + readable text on each step */
+  --map-1: #DCE4FC; --map-2: #B3C4F7; --map-3: #7F9BF0; --map-4: #1946E3; --map-5: #0E2B8C;
+  --map-fg-1: #0A0A0A; --map-fg-2: #0A0A0A; --map-fg-3: #0A0A0A; --map-fg-4: #FFFFFF; --map-fg-5: #FFFFFF;
+
+  /* Chart palette — categorical, vivid. Use in order; series 1 is always NODS blue.
+     Single-series charts stay blue. Patterns (patterns.css) are an optional 2nd encoding. */
+  --chart-1: #1946E3;   /* blue   */
+  --chart-2: #FF6B57;   /* coral  */
+  --chart-3: #06B6D4;   /* cyan   */
+  --chart-4: #8B5CF6;   /* violet */
+  --chart-5: #FFB020;   /* sun    */
+  --chart-6: #E64980;   /* pink   */
+  --chart-7: #22C55E;   /* green  */
+  --chart-8: #0B1B4D;   /* navy   */
+
+  /* Sequential "Aurora" (cyan → blue → violet) — heat maps, intensity */
+  --aurora-1: #CFF5FB; --aurora-2: #5FD4EA; --aurora-3: #2E8BEF; --aurora-4: #1946E3; --aurora-5: #5B2BC9;
+  --aurora-fg-1: #0A0A0A; --aurora-fg-2: #0A0A0A; --aurora-fg-3: #FFFFFF; --aurora-fg-4: #FFFFFF; --aurora-fg-5: #FFFFFF;
+
+  /* Diverging coral ↔ blue — vs target (below · around · above) */
+  --div-1: #C8402A; --div-2: #FBB8A9; --div-3: #EEF0F3; --div-4: #9DB4FA; --div-5: #1946E3;
+  --div-fg-1: #FFFFFF; --div-fg-2: #0A0A0A; --div-fg-3: #0A0A0A; --div-fg-4: #0A0A0A; --div-fg-5: #FFFFFF;
+
+  /* Funnel stages (violet → blue → cyan → teal) */
+  --funnel-1: #5B2BC9; --funnel-2: #4338E0; --funnel-3: #1946E3; --funnel-4: #2585EE; --funnel-5: #0BB0D6; --funnel-6: #14B8A6;
+
+  /* Tables */
+  --table-stripe: #F5F7FA;
+  --table-hover: var(--nods-blue-050);
+
+  --divider-navy-bg: var(--nods-blue-deep);
+  --divider-black-bg: var(--ink);
+}

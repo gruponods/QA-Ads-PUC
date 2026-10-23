@@ -1,0 +1,27 @@
+/* Nods — Spacing, layout & grid tokens
+   Generous margins, strict alignment, and lots of white space are part of the
+   design. Slides are authored on a 1280×720 canvas with a 12-column grid. */
+:root{
+  /* 4px-based spacing scale */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  /* Slide geometry (16:9) */
+  --slide-w: 1280px;
+  --slide-h: 720px;
+  --slide-pad-x: 88px;    /* generous side margin */
+  --slide-pad-y: 64px;
+
+  /* 12-column grid */
+  --grid-cols: 12;         /* @kind other */
+  --grid-gutter: 24px;
+}

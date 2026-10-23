@@ -1,0 +1,54 @@
+<!-- @dsCard group="Components" viewport="700x1000" name="Display — Avatar · ProgressBar · DataTable · CategoryChip · ThresholdValue · DataBar · HeatCell" subtitle="Tables with clear rows, row alerts, conditional formatting and category chips" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--font-sans)}#root{padding:30px 34px}.grp{margin-bottom:28px}.grp:last-child{margin-bottom:0}.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;margin:0 0 14px}.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { Avatar, ProgressBar, DataTable, StatusDot, CategoryChip, ThresholdValue, DataBar, HeatCell } = window.NodsDesignSystem_bde349;
+function Demo() {
+  return (<div>
+<div className="grp"><p className="lbl">Avatar</p><div className="row">
+<Avatar name="Laura Méndez" size={28} /><Avatar name="Tomás Ibarra" size={36} /><Avatar name="Sofía Paz" size={48} /><Avatar name="Bruno Castro" size={64} />
+</div></div>
+<div className="grp"><p className="lbl">Progress bar</p><div className="g2">
+<ProgressBar value={72} label="Matemática 3°A" showValue />
+<ProgressBar value={34} label="Tomás Ibarra" showValue />
+<ProgressBar value={58} size="sm" />
+<ProgressBar value={100} size="sm" />
+</div></div>
+<div className="grp"><p className="lbl">Category chip · soft / outline / filtro</p><div className="row" style={{gap:'8px'}}>
+<CategoryChip tone={1} icon="math-function">Matemática</CategoryChip><CategoryChip tone={2} icon="book">Lengua</CategoryChip><CategoryChip tone={3} icon="flask">Ciencias</CategoryChip><CategoryChip tone={4}>Historia</CategoryChip><CategoryChip tone={5}>Inglés</CategoryChip><CategoryChip tone={6}>Arte</CategoryChip>
+<CategoryChip tone={3} variant="outline">Outline</CategoryChip><CategoryChip tone={2} count={4} selected onClick={() => {}}>Filtro activo</CategoryChip><CategoryChip tone={4} count={2} selected={false} onClick={() => {}}>Inactivo</CategoryChip>
+</div></div>
+<div className="grp"><p className="lbl">Formato condicional</p><div className="row" style={{gap:'22px'}}>
+<ThresholdValue value={8.4} warn={7} bad={6} /><ThresholdValue value={6.6} warn={7} bad={6} /><ThresholdValue value={5.2} warn={7} bad={6} /><ThresholdValue value={11} warn={4} bad={9} higherIsBetter={false} variant="pill" /><ThresholdValue value={95} suffix="%" good={90} variant="pill" />
+<DataBar value={92} unit="%" warn={85} bad={75} width={80} /><DataBar value={71} unit="%" warn={85} bad={75} width={80} />
+<span style={{display:'inline-flex',gap:'4px'}}>{[18,42,61,79,96,null].map((v,i) => <HeatCell key={i} value={v} />)}</span>
+</div></div>
+<div className="grp"><p className="lbl">Data table · cebra + alertas de fila + orden</p>
+<DataTable dense onRowClick={() => {}} rowKey="n" defaultSort={{key:'a',dir:'asc'}} rowTone={r => r.t === 'ok' ? null : r.t} columns={[
+ {key:'n',label:'Alumno',sortable:true,render:r => <span style={{display:'inline-flex',alignItems:'center',gap:'10px'}}><Avatar name={r.n} size={28} />{r.n}</span>},
+ {key:'c',label:'Área',render:r => <CategoryChip tone={r.ct}>{r.c}</CategoryChip>},
+ {key:'a',label:'Nota',align:'right',sortable:true,render:r => <ThresholdValue value={r.a} warn={7} bad={6} />},
+ {key:'p',label:'Asistencia',sortable:true,render:r => <DataBar value={r.p} unit="%" warn={85} bad={75} width={70} />},
+ {key:'s',label:'Estado',render:r => <StatusDot tone={r.t}>{r.s}</StatusDot>}]}
+ rows={[{n:'Valentina Ríos',c:'Matemática',ct:1,a:9.1,p:96,t:'ok',s:'Al día'},{n:'Joaquín López',c:'Lengua',ct:2,a:6.6,p:83,t:'warn',s:'Atención'},{n:'Tomás Ibarra',c:'Ciencias',ct:3,a:5.2,p:71,t:'risk',s:'En riesgo'},{n:'Camila Herrera',c:'Historia',ct:4,a:7.9,p:91,t:'ok',s:'Al día'}]} />
+</div>
+<div className="grp"><p className="lbl">Variante · separadas</p>
+<DataTable dense variant="separated" rowKey="n" columns={[{key:'n',label:'Curso'},{key:'c',label:'Área',render:r => <CategoryChip tone={r.ct} variant="outline">{r.c}</CategoryChip>},{key:'a',label:'Promedio',align:'right',render:r => <ThresholdValue value={r.a} warn={7} bad={6} />}]}
+ rows={[{n:'Matemática 3°A',c:'Matemática',ct:1,a:7.8},{n:'Historia 4°B',c:'Historia',ct:4,a:5.6}]} />
+</div></div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

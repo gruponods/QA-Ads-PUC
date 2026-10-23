@@ -1,0 +1,100 @@
+<!-- @dsCard group="Web app" viewport="1440x900" name="NODS Aula — web app" subtitle="Panel docente: inicio, aulas, detalle, contenidos, ajustes, login y diálogo" -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NODS Aula — Web app</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<style>html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans)}@keyframes nodsPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.page-in{animation:nodsPageIn .36s cubic-bezier(.2,0,0,1)}@media (prefers-reduced-motion:reduce){.page-in{animation:none}}.logo-dark{display:none}[data-nods-theme^="dark"] .logo-light{display:none}[data-nods-theme^="dark"] .logo-dark{display:block}a{color:var(--accent)}a:hover{color:var(--accent-strong)}*{-webkit-font-smoothing:antialiased}</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="data.js"></script>
+<script type="text/babel" data-presets="react" src="shell.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-home.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-classes.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-misc.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-reach.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-tracking.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-performance.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-funnel.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-social.app.js"></script>
+<script type="text/babel" data-presets="react" src="screen-persona.app.js"></script>
+<script type="text/babel">
+(() => {
+const { Alert } = window.NodsDesignSystem_bde349;
+const LABELS = { home: 'Inicio', classes: 'Aulas', tracking: 'Seguimiento', performance: 'Rendimiento', funnel: 'Funnel', social: 'Redes sociales', persona: 'Buyer persona', content: 'Contenidos', reach: 'Red regional', settings: 'Ajustes' };
+const Q = new URLSearchParams(location.search);
+const EMBED = Q.has('theme') || Q.has('screen');
+
+function App() {
+  const D = window.NODS_APP;
+  const [screen, setScreen] = React.useState(() => Q.get('screen') || localStorage.getItem('nods-app-screen') || 'home');
+  const [theme, setTheme] = React.useState(() => Q.get('theme') || localStorage.getItem('nods-app-theme') || 'light');
+  const [lastDark, setLastDark] = React.useState(() => localStorage.getItem('nods-app-dark') || 'dark');
+  React.useLayoutEffect(() => {
+    document.body.style.background = theme === 'light' ? '' : ({ dark: '#0E0F12', 'dark-navy': '#081230', 'dark-black': '#000000' })[theme] || '';
+    if (EMBED) return;
+    localStorage.setItem('nods-app-theme', theme);
+    if (theme !== 'light') { localStorage.setItem('nods-app-dark', theme); setLastDark(theme); }
+  }, [theme]);
+  const toggleTheme = () => setTheme((t) => (t === 'light' ? lastDark : 'light'));
+  const [clsId, setClsId] = React.useState(() => localStorage.getItem('nods-app-class') || D.classes[0].id);
+  const [dialog, setDialog] = React.useState(false);
+  const [toast, setToast] = React.useState(null);
+  React.useEffect(() => { if (!EMBED) localStorage.setItem('nods-app-screen', screen); }, [screen]);
+  React.useEffect(() => { localStorage.setItem('nods-app-class', clsId); }, [clsId]);
+  React.useEffect(() => { if (!toast) return undefined; const t = setTimeout(() => setToast(null), 3500); return () => clearTimeout(t); }, [toast]);
+  const go = (s) => { setScreen(s); window.scrollTo(0, 0); };
+  const openClass = (id) => { setClsId(id); go('class'); };
+
+  const themed = (node) => <div data-nods-theme={theme === 'light' ? undefined : theme} style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>{node}</div>;
+  if (screen === 'login') return themed(<LoginScreen onLogin={() => go('home')} />);
+
+  const cls = D.classes.find((c) => c.id === clsId) || D.classes[0];
+  const crumbs = [{ label: D.user.school, to: 'home' }].concat(
+    screen === 'class' ? [{ label: 'Aulas', to: 'classes' }, { label: cls.name }] : [{ label: LABELS[screen] || 'Inicio' }]
+  );
+  return themed(
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+      <Sidebar current={screen === 'class' ? 'classes' : screen} onNavigate={go} user={D.user} onLogout={() => go('login')} />
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <Topbar crumbs={crumbs} onCrumb={go} dark={theme !== 'light'} onToggleTheme={toggleTheme} />
+        <main style={{ width: '100%', maxWidth: 'var(--app-content-max)', margin: '0 auto', padding: 'var(--app-pad)', boxSizing: 'border-box' }}>
+          <div key={screen === 'class' ? 'class-' + clsId : screen} className="page-in">
+          {screen === 'home' && <HomeScreen data={D} onOpenClass={openClass} onNewTask={() => setDialog(true)} onNavigate={go} />}
+          {screen === 'classes' && <ClassesScreen data={D} onOpen={openClass} />}
+          {screen === 'class' && <ClassDetailScreen data={D} cls={cls} onBack={() => go('classes')} onNewTask={() => setDialog(true)} />}
+          {screen === 'content' && <ContentScreen data={D} />}
+          {screen === 'reach' && <ReachScreen data={D} />}
+          {screen === 'tracking' && <TrackingScreen data={D} />}
+          {screen === 'performance' && <PerformanceScreen data={D} />}
+          {screen === 'funnel' && <FunnelScreen data={D} />}
+          {screen === 'social' && <SocialScreen data={D} />}
+          {screen === 'persona' && <PersonaScreen data={D} />}
+          {screen === 'settings' && <SettingsScreen data={D} theme={theme} onTheme={setTheme} />}
+          </div>
+        </main>
+      </div>
+      <NewTaskDialog open={dialog} onClose={() => setDialog(false)} classes={D.classes} onCreate={(t) => { setDialog(false); setToast(t); }} />
+      {toast && (
+        <div style={{ position: 'fixed', right: '24px', bottom: '24px', width: '380px', maxWidth: 'calc(100vw - 48px)', zIndex: 1100 }}>
+          <Alert tone="success" title="Tarea creada" onClose={() => setToast(null)}>«{toast}» se publicó en el aula.</Alert>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+})();
+</script>
+</body>
+</html>

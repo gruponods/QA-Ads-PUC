@@ -1,0 +1,11 @@
+/* Nods — Chart fill patterns (tramas)
+   Optional SECOND encoding on top of the chart palette (--chart-*): use for print,
+   color-blind safety, or "projected / future" values. Use on a white background with a
+   1.5px blue border. Order of use: solid → diagonal → dots → cross → horizontal → tint. */
+:root{
+  --pattern-diagonal: repeating-linear-gradient(45deg, var(--nods-blue) 0 2px, transparent 2px 7px); /* @kind other */
+  --pattern-cross: repeating-linear-gradient(45deg, var(--nods-blue) 0 1.5px, transparent 1.5px 7px), repeating-linear-gradient(-45deg, var(--nods-blue) 0 1.5px, transparent 1.5px 7px); /* @kind other */
+  --pattern-dots: radial-gradient(var(--nods-blue) 1.5px, transparent 1.7px); /* @kind other */
+  --pattern-dots-size: 6px 6px; /* @kind other */ /* use as background-size with --pattern-dots */
+  --pattern-horizontal: repeating-linear-gradient(0deg, var(--nods-blue) 0 2px, transparent 2px 6px); /* @kind other */
+}
