@@ -346,7 +346,8 @@ function render() {
   const pg = PAGES.find((p) => p.id === st.page) || PAGES[0];
   $('#crumbs').innerHTML = `QA Meta Ads <i class="ti ti-chevron-right" style="color:var(--gray-300)"></i> <b>${esc(st.control ? CONTROLS.find((c) => c.key === st.control).title : pg.label)}</b>`;
   if (!R) {
-    $('#content').innerHTML = `${pageHead('Control de calidad · Campañas 2027', 'Todavía no hay un <em>reporte</em>.', 'Tocá Actualizar para leer el sheet y los anuncios de Meta. Tarda uno o dos minutos.')}`;
+    $('#content').innerHTML = `${pageHead('Control de calidad · Campañas 2027', 'Todavía no hay un <em>reporte</em>.',
+      st.visor ? 'El reporte se publica cada mañana desde la tarea diaria de QA.' : 'Tocá Actualizar para leer el sheet y los anuncios de Meta. Tarda uno o dos minutos.')}`;
     return;
   }
   $('#updated').textContent = 'Actualizado ' + new Date(R.generado).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -402,7 +403,9 @@ async function load() {
 async function watch(wasRunning = false) {
   const s = await (await fetch('/api/status')).json();
   const btn = $('#refresh');
-  $('#vision-wrap').style.display = s.vision_disponible ? '' : 'none';
+  st.visor = s.modo === 'visor';
+  $('#vision-wrap').style.display = s.vision_disponible && !st.visor ? '' : 'none';
+  btn.style.display = st.visor ? 'none' : '';
   if (s.running) {
     btn.disabled = true;
     btn.innerHTML = `<i class="ti ti-loader-2 spin"></i><span>${esc(s.step)}…</span>`;
@@ -422,6 +425,5 @@ $('#refresh').addEventListener('click', async () => {
   setTimeout(() => watch(true), 500);
 });
 
-watch();
-load();
+watch().then(load);
 })();

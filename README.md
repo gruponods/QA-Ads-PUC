@@ -30,20 +30,32 @@ app/seed/          lecturas de piezas ya hechas (arranque de un servidor nuevo)
 design-system/     sistema de diseño NODS (estilos, íconos, logos)
 ```
 
-## Variables de entorno
+## Cómo funciona
 
-| Variable | Obligatoria | Descripción |
-|---|---|---|
-| `META_ACCESS_TOKEN` | Sí | Token de usuario del sistema de Meta (solo lectura: `ads_read`) |
-| `META_AD_ACCOUNT_ID` | Sí | `106326206432820` |
-| `META_API_VERSION` | No | Default `v24.0` |
-| `ANTHROPIC_API_KEY` | No | Lee automáticamente las piezas nuevas (precio y programa) |
-| `APP_PASSWORD` | Recomendada | Pide contraseña para ver el tablero (usuario: cualquiera) |
-| `DATA_DIR` | En Railway | Carpeta persistente para reporte, imágenes y lecturas (ej. `/data`) |
-| `REFRESH_TIME` | No | Hora de la actualización diaria, `HH:MM` (default `07:30`) |
-| `TZ_NAME` | No | Zona horaria (default `America/Santiago`) |
+- **La PC es el cerebro.** La tarea diaria de Claude (7:30) corre `app/qa_engine.py`, lee las
+  piezas nuevas y publica el resultado con `app/publicar.py`.
+- **Railway solo muestra.** No llama a Meta ni al sheet: guarda y sirve el último reporte
+  publicado (y sus imágenes). En Railway no hay botón *Actualizar*.
 
-Localmente se leen de un archivo `.env` en la raíz (no se sube al repo).
+## Variables
+
+Local (`.env` en la raíz, no se sube al repo):
+
+| Variable | Descripción |
+|---|---|
+| `META_ACCESS_TOKEN` | Token de usuario del sistema de Meta (lectura) |
+| `META_AD_ACCOUNT_ID` | `106326206432820` |
+| `META_API_VERSION` | Default `v24.0` |
+| `ANTHROPIC_API_KEY` | Opcional: lee las piezas por API en vez de la tarea de Claude |
+| `RAILWAY_URL` | Dominio del tablero publicado |
+| `APP_PASSWORD` | La misma contraseña configurada en Railway |
+
+Railway:
+
+| Variable | Descripción |
+|---|---|
+| `APP_PASSWORD` | Contraseña para ver el tablero y para publicar (usuario: cualquiera) |
+| `DATA_DIR` | `/data` (volumen persistente) |
 
 ## Uso local
 
@@ -53,31 +65,21 @@ python -m venv .venv
 .venv/Scripts/python app/server.py --open
 ```
 
-O doble clic en `Abrir tablero QA.bat`. Para correr solo el motor: `python app/qa_engine.py`.
+O doble clic en `Abrir tablero QA.bat`.
+
+## Rutina diaria (la corre la tarea programada)
+
+```bash
+python app/qa_engine.py            # lee sheet + Meta → data/report.json y data/pending_vision.json
+python app/vision.py dividir 4     # lotes de piezas pendientes para leer en paralelo
+python app/vision.py guardar-lotes # suma las lecturas al cache
+python app/vision.py aplicar       # las aplica al reporte
+python app/publicar.py             # publica reporte + imágenes nuevas en Railway
+```
 
 ## Deploy en Railway
 
-1. Conectar el repo al servicio (Railway detecta Python por `requirements.txt`; el arranque está en `railway.json`).
-2. Agregar un **Volume** montado en `/data` y la variable `DATA_DIR=/data`.
-3. Cargar las variables de la tabla de arriba.
-4. Generar un dominio en *Settings → Networking*.
-
-El servidor actualiza el reporte al arrancar (si no hay uno) y todos los días a `REFRESH_TIME`.
-También se puede actualizar con el botón **Actualizar** del tablero.
-
-## Lectura de piezas (sin API key en Railway)
-
-Las piezas nuevas (imágenes y láminas de 6 fotogramas de cada video) las lee la tarea diaria
-local de Claude y se envían al tablero publicado:
-
-```bash
-python app/qa_engine.py            # deja data/pending_vision.json
-python app/vision.py dividir 4     # lotes para leer en paralelo
-python app/vision.py guardar-lotes # suma las lecturas al cache
-python app/vision.py aplicar       # las aplica al reporte local
-python app/sync_railway.py         # las envía a Railway (POST /api/vision-cache)
-```
-
-`sync_railway.py` necesita en el `.env` local `RAILWAY_URL` (dominio del servicio) y
-`APP_PASSWORD` (la misma configurada en Railway). Railway aplica las lecturas recibidas al
-reporte sin volver a consultar Meta. El endpoint solo funciona si `APP_PASSWORD` está configurada.
+1. Conectar el repo al servicio (Python por `requirements.txt`; arranque en `railway.json`).
+2. Volume montado en `/data` y `DATA_DIR=/data`.
+3. Variable `APP_PASSWORD`.
+4. Dominio en *Settings → Networking*.
