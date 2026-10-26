@@ -235,7 +235,7 @@ def load_plan():
                "url_base": r[17].strip(), "ref": r[18].split("=", 1)[-1].strip(),
                "utm_source": r[19].split("=", 1)[-1].strip(), "utm_medium": r[20].split("=", 1)[-1].strip(),
                "utm_campaign": r[21].split("=", 1)[-1].strip(), "link_final": r[23].strip(),
-               "observaciones": r[12].strip()}
+               "observaciones": r[12].strip(), "piezas": r[11].strip()}
         programs.setdefault(sig, {"sigla": sig, "programa": r[2].strip(), "estado_estructura": "",
                                   "modalidad": r[5].strip(), "inicio": None, "landing": "",
                                   "paises": [], "creatividad": None})
@@ -247,8 +247,10 @@ def load_plan():
         implementado = bool(c) and c["estado"].lower().startswith(("implementad", "aprobado puc"))
         # Sin landing en Estructura: todavía no nos compartieron la URL, no se puede activar.
         p["esperando_url"] = en_pauta and not p["landing"]
-        # Con landing pero la creatividad no está Implementada: todavía no puede salir.
-        p["creatividad_pendiente"] = en_pauta and bool(p["landing"]) and not implementado
+        # Sin piezas cargadas en Creatividad 2027: todavía no hay nada que revisar.
+        p["sin_piezas"] = en_pauta and bool(p["landing"]) and not implementado and not (c and c["piezas"])
+        # Con landing y piezas, pero la creatividad no está Implementada: todavía no puede salir.
+        p["creatividad_pendiente"] = en_pauta and bool(p["landing"]) and not implementado and not p["sin_piezas"]
         p["debe_correr"] = en_pauta and bool(p["landing"]) and implementado
     return programs, discount
 
@@ -597,10 +599,12 @@ def run(progress=lambda msg: None, use_api=True):
     for sig, p in sorted(programs.items()):
         rows = by_sigla.get(sig, [])
         act = [r for r in rows if r["estado"] == "ACTIVE"]
-        if not p["debe_correr"] and not act and not p["esperando_url"] and not p["creatividad_pendiente"]:
+        if not p["debe_correr"] and not act and not p["esperando_url"] and not p["creatividad_pendiente"]                 and not p["sin_piezas"]:
             continue
         if p["esperando_url"] and not act:
             estado = "sin_landing"
+        elif p["sin_piezas"] and not act:
+            estado = "sin_piezas"
         elif p["creatividad_pendiente"] and not act:
             estado = "creatividad_pendiente"
             issues.append({"control": "Programas", "severidad": "warn", "ad_id": "", "ad_name": "", "sigla": sig,
@@ -641,7 +645,8 @@ def run(progress=lambda msg: None, use_api=True):
                                "detalle": f"La fecha de inicio del sheet ({p['inicio']}) ya pasó", "campo": None,
                                "link": "", "gasto7d": 0})
         out_programs.append({**{k: p[k] for k in ("sigla", "programa", "estado_estructura", "inicio", "paises",
-                                                  "debe_correr", "esperando_url", "creatividad_pendiente", "landing")},
+                                                  "debe_correr", "esperando_url", "creatividad_pendiente", "sin_piezas",
+                                                  "landing")},
                              "estado": estado, "paises_meta": got, "anuncios": len(act),
                              "anuncios_total": len(rows), "gasto7d": sum(r["gasto7d"] for r in act),
                              "creatividad": p["creatividad"]})

@@ -221,7 +221,8 @@ function pageResumen() {
           ${(() => {
             const cp = R.programas.filter((p) => p.estado === 'creatividad_pendiente').length;
             const su = R.programas.filter((p) => p.estado === 'sin_landing').length;
-            const txt = [cp && `${cp} con creatividad pendiente`, su && `${su} esperando URL de landing`].filter(Boolean).join(' · ');
+            const sp = R.programas.filter((p) => p.estado === 'sin_piezas').length;
+            const txt = [cp && `${cp} con creatividad pendiente`, sp && `${sp} esperando piezas`, su && `${su} esperando URL de landing`].filter(Boolean).join(' · ');
             return txt ? `<div class="kpi-foot" style="margin-top:6px">Sin pauta: ${txt}</div>` : '';
           })()}</div>
         <div class="card stat"><div class="kpi-label">Anuncios con errores</div><div class="kpi-value">${adsErr.length}<small> / ${act.length}</small></div>
@@ -254,15 +255,16 @@ function pageControl() {
 }
 
 function pageProgramas() {
-  const order = { sin_anuncios: 0, pausado: 1, sobra: 2, creatividad_pendiente: 3, sin_landing: 4, ok: 5 };
+  const order = { sin_anuncios: 0, pausado: 1, sobra: 2, creatividad_pendiente: 3, sin_piezas: 4, sin_landing: 5, ok: 6 };
   const rows = [...R.programas].sort((a, b) => (order[a.estado] - order[b.estado]) || a.sigla.localeCompare(b.sigla));
   const errBySigla = {};
   R.issues.forEach((i) => { if (i.severidad === 'error' && i.sigla) errBySigla[i.sigla] = (errBySigla[i.sigla] || 0) + 1; });
-  const label = { ok: ['ok', 'En pauta'], pausado: ['error', 'Pausado'], sin_anuncios: ['error', 'Sin anuncios'], sobra: ['error', 'No debería estar activo'], sin_landing: ['off', 'Esperando URL'], creatividad_pendiente: ['warn', 'Creatividad pendiente'] };
+  const label = { ok: ['ok', 'En pauta'], pausado: ['error', 'Pausado'], sin_anuncios: ['error', 'Sin anuncios'], sobra: ['error', 'No debería estar activo'], sin_landing: ['off', 'Esperando URL'], sin_piezas: ['off', 'Esperando piezas'], creatividad_pendiente: ['warn', 'Creatividad pendiente'] };
   const body = rows.map((p) => {
     const [sev, txt] = label[p.estado] || ['off', p.estado];
     const paisOk = p.paises.every((c) => p.paises_meta.includes(c)) && p.paises_meta.every((c) => p.paises.includes(c));
     return `<tr class="clickable tone-${sev === 'error' ? 'error' : ''}" data-sigla="${esc(p.sigla)}" ${p.estado === 'sin_landing' ? 'data-tip="Sin landing en Estructura 2027: todavía no compartieron la URL, no se puede activar."'
+      : p.estado === 'sin_piezas' ? 'data-tip="Pauta Activa y con landing, pero todavía no hay piezas cargadas en Creatividad 2027: no se revisa."'
       : p.estado === 'creatividad_pendiente' ? 'data-tip="Pauta Activa y con landing, pero la creatividad todavía no está Implementada en Creatividad 2027."' : ''}>
       <td>${dot(sev, txt)}</td><td><b>${esc(p.sigla)}</b></td><td>${esc(p.programa)}</td>
       <td>${p.inicio ? esc(p.inicio.split('-').reverse().join('/')) : '—'}</td>
