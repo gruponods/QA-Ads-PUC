@@ -8,7 +8,6 @@ const PAGES = [
   { id: 'resumen', label: 'Resumen', icon: 'layout-dashboard' },
   { id: 'programas', label: 'Programas', icon: 'school' },
   { id: 'anuncios', label: 'Anuncios', icon: 'photo' },
-  { id: 'mejoras', label: 'Mejoras automáticas', icon: 'wand' },
   { id: 'alertas', label: 'Alertas', icon: 'alert-triangle' },
 ];
 const CONTROLS = [
@@ -18,12 +17,11 @@ const CONTROLS = [
   { key: 'URL', icon: 'link', title: 'URL y UTM', desc: 'Landing, ref y UTMs como en Creatividad 2027 (video2, img2… son válidos); la landing responde.' },
   { key: 'Pieza', icon: 'photo-scan', title: 'Pieza: programa y precio', desc: 'La IA lee la pieza: que sea del programa y que el precio sea el del sheet.' },
   { key: 'Ubicaciones', icon: 'layout-columns', title: 'Ubicaciones', desc: 'Stories/Reels y Feed muestran el mismo programa y llevan a la misma landing.' },
-  { key: 'Mejoras automáticas', icon: 'wand', title: 'Mejoras automáticas', desc: 'Anuncios con mejoras de Meta activadas que hay que quitar.' },
   { key: 'Alertas', icon: 'alert-triangle', title: 'Alertas', desc: 'Sin gasto, sin pieza vertical, fechas pasadas, anuncios rechazados.' },
 ];
 const CHECK_COLS = [
   ['programa', 'Programa'], ['pais', 'País'], ['descuento', 'Dcto.'],
-  ['url', 'URL'], ['pieza', 'Pieza'], ['ubicaciones', 'Ubic.'], ['mejoras', 'Mejoras'],
+  ['url', 'URL'], ['pieza', 'Pieza'], ['ubicaciones', 'Ubic.'],
 ];
 const visionRead = () => (R.vision && R.vision.leidas) || 0;
 const visionPending = () => (R.vision && R.vision.pendientes) || 0;

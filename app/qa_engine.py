@@ -469,7 +469,7 @@ def run(progress=lambda msg: None, use_api=True):
                "campana_id": a["campaign"]["id"], "estado_campana": a["campaign"].get("effective_status", ""),
                "conjunto": a["adset"]["name"], "paises": geo.get("countries", []),
                "creado": a.get("created_time", "")[:10], "gasto7d": round(spend.get(a["id"], 0)),
-               "link": am + a["id"], "variantes": variants, "mejoras": enhancements(cr, fmt),
+               "link": am + a["id"], "variantes": variants, "mejoras": [],
                "checks": {}}
         out_ads.append(row)
         if sig:
@@ -566,10 +566,9 @@ def run(progress=lambda msg: None, use_api=True):
             if not any(v["ubicacion"] == "Stories y Reels" for v in variants) and len(variants) == 1:
                 issue("Alertas", "warn", a, sig, "Sin pieza específica para Stories y Reels (una sola versión para todo)")
 
-        # 4. mejoras automáticas
-        ck["mejoras"] = "error" if row["mejoras"] else "ok"
-        if row["mejoras"]:
-            issue("Mejoras automáticas", "error", a, sig, ", ".join(m["label"] for m in row["mejoras"]))
+        # 4. mejoras automáticas: desactivado. Lo que devuelve la API (creative_features_spec) no coincide
+        # con lo que muestra Ads Manager y marcaba mejoras que el anuncio no tiene. enhancements() queda
+        # para cuando haya una fuente confiable.
 
         # alertas de entrega
         created = a.get("created_time", "")[:10]
