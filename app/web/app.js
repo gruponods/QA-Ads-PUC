@@ -12,7 +12,7 @@ const PAGES = [
   { id: 'alertas', label: 'Alertas', icon: 'alert-triangle' },
 ];
 const CONTROLS = [
-  { key: 'Programas', icon: 'school', title: 'Programas en pauta', desc: 'Lo activo en Meta contra Estructura 2027 (Pauta Activa) y Creatividad 2027 (Implementado).' },
+  { key: 'Programas', icon: 'school', title: 'Programas en pauta', desc: 'Lo activo en Meta contra Estructura 2027 (Pauta Activa) y Creatividad 2027 (Implementado o Aprobado PUC).' },
   { key: 'País', icon: 'world', title: 'País', desc: 'Los conjuntos de anuncios segmentan los países tildados en Estructura (Chile / Perú).' },
   { key: 'Descuento', icon: 'discount', title: 'Descuento', desc: 'El copy menciona el descuento vigente y el plazo no está vencido.' },
   { key: 'URL', icon: 'link', title: 'URL y UTM', desc: 'Landing, ref y UTMs como en Creatividad 2027 (video2, img2… son válidos); la landing responde.' },
@@ -271,7 +271,7 @@ function pageProgramas() {
       <td class="num">${p.anuncios}<span class="faint"> / ${p.anuncios_total}</span></td>
       <td class="num">${errBySigla[p.sigla] ? `<span class="check error">${errBySigla[p.sigla]}</span>` : '<span class="check ok"><i class="ti ti-circle-check"></i></span>'}</td></tr>`;
   }).join('');
-  return `${pageHead('Planificación vs. Meta', 'Programas que deben estar <em>en pauta</em>.', 'Pauta Activa en Estructura 2027 + Implementado en Creatividad 2027. Hacé clic en un programa para ver sus anuncios.')}
+  return `${pageHead('Planificación vs. Meta', 'Programas que deben estar <em>en pauta</em>.', 'Pauta Activa en Estructura 2027 + Implementado o Aprobado PUC en Creatividad 2027. Hacé clic en un programa para ver sus anuncios.')}
     <div class="table-wrap"><table><thead><tr><th>Estado</th><th>Sigla</th><th>Programa</th><th>Inicio</th><th>Países plan</th><th>Países Meta</th><th class="num">Anuncios activos</th><th class="num">Errores</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 

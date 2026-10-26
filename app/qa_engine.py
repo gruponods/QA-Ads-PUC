@@ -243,7 +243,8 @@ def load_plan():
     for p in programs.values():
         c = p["creatividad"]
         en_pauta = p["estado_estructura"] == "Pauta Activa"
-        implementado = bool(c) and c["estado"].lower().startswith("implementad")
+        # "Aprobado PUC" ya tiene el OK del cliente: puede salir aunque falte pasarlo a Implementado.
+        implementado = bool(c) and c["estado"].lower().startswith(("implementad", "aprobado puc"))
         # Sin landing en Estructura: todavía no nos compartieron la URL, no se puede activar.
         p["esperando_url"] = en_pauta and not p["landing"]
         # Con landing pero la creatividad no está Implementada: todavía no puede salir.
@@ -279,6 +280,8 @@ def placement_of(rule):
     pos = (spec.get("facebook_positions", []) + spec.get("instagram_positions", []))
     if any(p in ("story", "reels", "facebook_reels", "profile_reels") for p in pos):
         return "Stories y Reels"
+    if spec.get("publisher_platforms") == ["audience_network"]:
+        return "Audience Network"
     return "Feed y resto"
 
 
