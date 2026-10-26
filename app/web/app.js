@@ -259,7 +259,7 @@ function pageProgramas() {
   const rows = [...R.programas].sort((a, b) => (order[a.estado] - order[b.estado]) || a.sigla.localeCompare(b.sigla));
   const errBySigla = {};
   R.issues.forEach((i) => { if (i.severidad === 'error' && i.sigla) errBySigla[i.sigla] = (errBySigla[i.sigla] || 0) + 1; });
-  const label = { ok: ['ok', 'En pauta'], pausado: ['error', 'Pausado'], sin_anuncios: ['error', 'Sin anuncios'], sobra: ['error', 'No debería estar activo'], sin_landing: ['off', 'Esperando URL'], sin_piezas: ['off', 'Esperando piezas'], creatividad_pendiente: ['warn', 'Creatividad pendiente'] };
+  const label = { ok: ['ok', 'En pauta'], pausado: ['error', 'Pausado'], sin_anuncios: ['error', 'Sin anuncios'], sobra: ['error', 'No debería estar activo'], sin_landing: ['off', 'Esperando URL'], sin_piezas: ['off', 'Esperando piezas'], creatividad_pendiente: ['off', 'Creatividad pendiente'] };
   const body = rows.map((p) => {
     const [sev, txt] = label[p.estado] || ['off', p.estado];
     const paisOk = p.paises.every((c) => p.paises_meta.includes(c)) && p.paises_meta.every((c) => p.paises.includes(c));

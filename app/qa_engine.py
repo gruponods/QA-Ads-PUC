@@ -606,11 +606,8 @@ def run(progress=lambda msg: None, use_api=True):
         elif p["sin_piezas"] and not act:
             estado = "sin_piezas"
         elif p["creatividad_pendiente"] and not act:
+            # Creatividad en revisión: es el flujo normal, no una observación (solo se muestra el estado).
             estado = "creatividad_pendiente"
-            issues.append({"control": "Programas", "severidad": "warn", "ad_id": "", "ad_name": "", "sigla": sig,
-                           "detalle": "En Estructura está en Pauta Activa y tiene landing, pero en Creatividad 2027 "
-                                      f"no figura Implementado ('{(p['creatividad'] or {}).get('estado') or 'sin fila'}'): "
-                                      "todavía no tiene pauta", "campo": None, "link": "", "gasto7d": 0})
         else:
             estado = "ok" if (p["debe_correr"] and act) else ("pausado" if p["debe_correr"] and rows else
                                                             "sin_anuncios" if p["debe_correr"] else "sobra")
