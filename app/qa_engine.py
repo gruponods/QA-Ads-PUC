@@ -347,12 +347,18 @@ def build_variants(cr):
 
 
 # La API las devuelve OPT_IN pero Ads Manager no las muestra ni deja apagarlas: no se marcan.
-HIDDEN_ENHANCEMENTS = {"show_destination_blurbs", "reveal_details_over_time", "standard_enhancements"}
+# Productos necesita catálogo y traducir voz en off necesita Idiomas activado: sin eso Ads Manager
+# las muestra apagadas aunque la API diga OPT_IN.
+HIDDEN_ENHANCEMENTS = {"show_destination_blurbs", "reveal_details_over_time", "standard_enhancements",
+                       "product_extensions", "translate_voiceover"}
 
 
-def enhancements(cr):
+def enhancements(cr, fmt=None):
     res = []
     for f, v in ((cr.get("degrees_of_freedom_spec") or {}).get("creative_features_spec") or {}).items():
+        # las mejoras de imagen no se aplican a un video (Ads Manager no las muestra)
+        if fmt == "video" and f.startswith("image_"):
+            continue
         if v.get("enroll_status") == "OPT_IN" and f not in HIDDEN_ENHANCEMENTS:
             res.append({"key": f, "label": ENHANCEMENT_LABELS.get(f, f.replace("_", " "))})
     if (cr.get("contextual_multi_ads") or {}).get("enroll_status") == "OPT_IN":
@@ -461,7 +467,7 @@ def run(progress=lambda msg: None, use_api=True):
                "campana_id": a["campaign"]["id"], "estado_campana": a["campaign"].get("effective_status", ""),
                "conjunto": a["adset"]["name"], "paises": geo.get("countries", []),
                "creado": a.get("created_time", "")[:10], "gasto7d": round(spend.get(a["id"], 0)),
-               "link": am + a["id"], "variantes": variants, "mejoras": enhancements(cr),
+               "link": am + a["id"], "variantes": variants, "mejoras": enhancements(cr, fmt),
                "checks": {}}
         out_ads.append(row)
         if sig:
