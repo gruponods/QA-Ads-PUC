@@ -358,6 +358,9 @@ def enhancements(cr, fmt=None):
         # las mejoras de imagen no se aplican a un video (Ads Manager no las muestra)
         if fmt == "video" and f.startswith("image_"):
             continue
+        # los anuncios de imagen no tienen "Experiencias interactivas" en Ads Manager
+        if fmt == "img" and f in ("reveal_details_over_time", "ads_with_benefits"):
+            continue
         if v.get("enroll_status") == "OPT_IN" and f not in HIDDEN_ENHANCEMENTS:
             res.append({"key": f, "label": ENHANCEMENT_LABELS.get(f, f.replace("_", " "))})
     if (cr.get("contextual_multi_ads") or {}).get("enroll_status") == "OPT_IN":
