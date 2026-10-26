@@ -27,15 +27,15 @@ MESES = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6
 
 # Nombres en español (como aparecen en Ads Manager) de las mejoras automáticas
 ENHANCEMENT_LABELS = {
-    "standard_enhancements": "Mejoras estándar",
-    "reveal_details_over_time": "Mostrar detalles progresivamente",
+    "standard_enhancements": "Agregar detalles al diseño del anuncio",
+    "reveal_details_over_time": "Revelar detalles con el tiempo",
     "show_destination_blurbs": "Fragmentos del sitio de destino",
     "product_extensions": "Agregar elementos del catálogo",
     "image_brightness_and_contrast": "Ajustar brillo y contraste",
     "inline_comment": "Comentarios relevantes",
     "show_summary": "Mostrar resumen",
     "translate_voiceover": "Traducir voz en off",
-    "ads_with_benefits": "Mostrar beneficios",
+    "ads_with_benefits": "Mostrar lo más destacado",
     "image_uncrop": "Expandir imagen",
     "image_touchups": "Retoques de imagen",
     "image_animation": "Animación de imagen",
@@ -349,8 +349,7 @@ def build_variants(cr):
 # La API las devuelve OPT_IN pero Ads Manager no las muestra ni deja apagarlas: no se marcan.
 # Productos necesita catálogo y traducir voz en off necesita Idiomas activado: sin eso Ads Manager
 # las muestra apagadas aunque la API diga OPT_IN.
-HIDDEN_ENHANCEMENTS = {"show_destination_blurbs", "reveal_details_over_time", "standard_enhancements",
-                       "product_extensions", "translate_voiceover"}
+HIDDEN_ENHANCEMENTS = {"show_destination_blurbs", "product_extensions", "translate_voiceover"}
 
 
 def enhancements(cr, fmt=None):
