@@ -346,10 +346,14 @@ def build_variants(cr):
     return out
 
 
+# La API las devuelve OPT_IN pero Ads Manager no las muestra ni deja apagarlas: no se marcan.
+HIDDEN_ENHANCEMENTS = {"show_destination_blurbs", "reveal_details_over_time", "standard_enhancements"}
+
+
 def enhancements(cr):
     res = []
     for f, v in ((cr.get("degrees_of_freedom_spec") or {}).get("creative_features_spec") or {}).items():
-        if v.get("enroll_status") == "OPT_IN":
+        if v.get("enroll_status") == "OPT_IN" and f not in HIDDEN_ENHANCEMENTS:
             res.append({"key": f, "label": ENHANCEMENT_LABELS.get(f, f.replace("_", " "))})
     if (cr.get("contextual_multi_ads") or {}).get("enroll_status") == "OPT_IN":
         res.append({"key": "contextual_multi_ads", "label": ENHANCEMENT_LABELS["contextual_multi_ads"]})
