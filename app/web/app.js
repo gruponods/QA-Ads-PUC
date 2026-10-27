@@ -9,6 +9,7 @@ const PAGES = [
   { id: 'programas', label: 'Programas', icon: 'school' },
   { id: 'anuncios', label: 'Anuncios', icon: 'photo' },
   { id: 'alertas', label: 'Alertas', icon: 'alert-triangle' },
+  { id: 'metodologia', label: 'Metodología', icon: 'list-check' },
 ];
 const CONTROLS = [
   { key: 'Programas', icon: 'school', title: 'Programas en pauta', desc: 'Lo activo en Meta contra Estructura 2027 (Pauta Activa) y Creatividad 2027 (Implementado o Aprobado PUC).' },
@@ -144,7 +145,7 @@ const ring = (pct, size = 140) => {
     <text x="50%" y="50%" class="ring-num" dominant-baseline="central" text-anchor="middle">${pct}%</text></svg>`;
 };
 const MATRIX_COLS = CONTROLS.map((c) => c.key);
-const MATRIX_SHORT = { Programas: 'Programa', 'País': 'País', Descuento: 'Dcto.', URL: 'URL', Pieza: 'Pieza', Ubicaciones: 'Ubic.', 'Mejoras automáticas': 'Mejoras', Alertas: 'Alertas' };
+const MATRIX_SHORT = { Programas: 'Programa', 'País': 'País', Descuento: 'Dcto.', URL: 'URL', Pieza: 'Pieza', Ubicaciones: 'Ubic.', Alertas: 'Alertas' };
 
 function pageResumen() {
   const act = activeAds();
@@ -259,7 +260,11 @@ function pageProgramas() {
   R.issues.forEach((i) => { if (i.severidad === 'error' && i.sigla) errBySigla[i.sigla] = (errBySigla[i.sigla] || 0) + 1; });
   const label = { ok: ['ok', 'En pauta'], pausado: ['error', 'Pausado'], sin_anuncios: ['error', 'Sin anuncios'], sobra: ['error', 'No debería estar activo'], sin_landing: ['off', 'Esperando URL'], sin_piezas: ['off', 'Esperando piezas'], creatividad_pendiente: ['off', 'Creatividad pendiente'] };
   const body = rows.map((p) => {
-    const [sev, txt] = label[p.estado] || ['off', p.estado];
+    let [sev, txt] = label[p.estado] || ['off', p.estado];
+    // Pausado: no es lo mismo aprobado hoy que atrasado hace días
+    if (p.estado === 'pausado' && p.dias_atraso === 0) [sev, txt] = ['warn', 'Aprobado hoy · activar'];
+    else if (p.estado === 'pausado' && p.dias_atraso > 0) txt = `Atrasado ${p.dias_atraso} día${p.dias_atraso > 1 ? 's' : ''}`;
+    else if (p.estado === 'pausado' && p.debe_correr) txt = 'Atrasado (+1 día)';
     const paisOk = p.paises.every((c) => p.paises_meta.includes(c)) && p.paises_meta.every((c) => p.paises.includes(c));
     return `<tr class="clickable tone-${sev === 'error' ? 'error' : ''}" data-sigla="${esc(p.sigla)}" ${p.estado === 'sin_landing' ? 'data-tip="Sin landing en Estructura 2027: todavía no compartieron la URL, no se puede activar."'
       : p.estado === 'sin_piezas' ? 'data-tip="Pauta Activa y con landing, pero todavía no hay piezas cargadas en Creatividad 2027: no se revisa."'
@@ -307,22 +312,109 @@ function pageAnuncios() {
     <tbody>${body || `<tr><td colspan="13"><div class="empty">No hay anuncios con estos filtros.</div></td></tr>`}</tbody></table></div>`;
 }
 
-function pageMejoras() {
-  const ads = activeAds().filter((a) => a.mejoras.length).sort((a, b) => b.gasto7d - a.gasto7d);
-  const count = {};
-  ads.forEach((a) => a.mejoras.forEach((m) => { count[m.label] = (count[m.label] || 0) + 1; }));
-  const body = ads.map((a) => `<tr class="clickable tone-error" data-ad="${esc(a.id)}">
-    <td>${idCell(a.id)}</td><td><div class="ad-name">${esc(a.name)}</div></td>
-    <td><div class="chips">${a.mejoras.map((m) => `<span class="chip">${esc(m.label)}</span>`).join('')}</div></td>
-    <td>${openBtn(a.link)}</td></tr>`).join('');
-  return `${pageHead('Mejoras automáticas de Meta', `${ads.length} anuncios para <em>corregir</em>.`, 'En Ads Manager: abrí el anuncio → sección Contenido → "Mejoras de Advantage+ creative" → desactivá las que figuran acá. Meta no permite editar las mejoras de un anuncio publicado desde la API sin crear un creativo nuevo.')}
-    <div class="chips" style="margin-bottom:16px">${Object.entries(count).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="chip">${esc(k)} · ${v}</span>`).join('')}</div>
-    <div class="table-wrap"><table><thead><tr><th>ID anuncio</th><th>Anuncio</th><th>Mejoras activadas</th><th></th></tr></thead><tbody>${body || `<tr><td colspan="4"><div class="empty">Ningún anuncio activo tiene mejoras automáticas.</div></td></tr>`}</tbody></table></div>`;
-}
-
 function pageAlertas() {
   const l = sortIssues(R.issues.filter((i) => i.control === 'Alertas' || i.severidad === 'warn'));
   return `${pageHead('Alertas', 'Puntos para <em>revisar</em>.', 'No son errores contra el sheet, pero pueden dejar algo desactualizado o sin rendimiento.', jiraBtn('revisar'))}${issuesTable(l)}`;
+}
+
+// ------------------------------------------------------------ metodología: qué se considera correcto
+function pageMetodologia() {
+  const d = `${R.descuento_vigente}%`;
+  const src = {
+    est: ['table', 'Estructura 2027'], cre: ['table', 'Creatividad 2027'],
+    meta: ['brand-meta', 'Meta Ads'], ia: ['photo-scan', 'Lectura de la pieza'], web: ['world-www', 'Landing'],
+  };
+  const srcChip = (k) => `<span class="src-chip"><i class="ti ti-${src[k][0]}"></i>${src[k][1]}</span>`;
+  const METHOD = [
+    { key: 'Programas', compara: ['est', 'cre', 'meta'],
+      ok: ['Programa en <b>Pauta Activa</b> en Estructura, con landing y creatividad <b>Implementado</b> o <b>Aprobado PUC</b>, y con anuncios activos'],
+      error: ['Anuncio activo de un programa que no tiene que estar en pauta', 'Programa que tiene que estar en pauta con la campaña pausada, archivada o con los conjuntos pausados',
+        'Programa que tiene que estar en pauta y no tiene anuncios 2027 creados', 'No se reconoce la sigla del programa en el nombre del anuncio'],
+      skip: ['Sin landing en Estructura → <b>Esperando URL</b>', 'Columna Piezas vacía en Creatividad → <b>Esperando piezas</b>', 'Creatividad en Revisión Nods o En proceso → <b>Creatividad pendiente</b>'] },
+    { key: 'País', compara: ['est', 'meta'],
+      ok: ['Los conjuntos activos segmentan <b>solo</b> los países tildados en Estructura (Chile / Perú) y los cubren todos'],
+      error: ['Un conjunto segmenta un país que el plan no incluye', 'Un país del plan no está en ningún conjunto activo'],
+      warn: ['Segmentación por regiones o ciudades en vez de países'] },
+    { key: 'Descuento', compara: ['meta'],
+      ok: [`El texto principal de cada ubicación menciona el <b>${d}</b>`, 'El plazo prometido (p. ej. "hasta el 30 de noviembre") todavía no venció'],
+      error: [`El copy no menciona el ${d}`, 'El copy promete un plazo que ya pasó'],
+      skip: ['Copy distinto al de Creatividad 2027: son variaciones de paid media'] },
+    { key: 'URL', compara: ['cre', 'meta', 'web'],
+      ok: ['Landing igual a la URL de Creatividad 2027', '<b>ref</b>, <b>utm_source</b>, <b>utm_medium</b> y <b>utm_campaign</b> iguales al sheet',
+        '<b>utm_term</b> según el formato: img o video', 'La landing responde'],
+      error: ['El anuncio no tiene URL de destino', 'Landing o parámetro distinto al sheet', 'utm_term que no corresponde al formato', 'La landing da error o no responde'],
+      warn: ['La landing redirige a otra página'],
+      skip: ['utm_term con número (img2, video3): es otra pieza, es válido'] },
+    { key: 'Pieza', compara: ['ia', 'cre'],
+      ok: ['La pieza es del programa del anuncio', 'Los precios visibles coinciden con el sheet (lista, con descuento o USD)', `Si muestra un descuento, es el ${d}`],
+      error: ['La pieza es de otro programa', 'Un precio no coincide con el sheet (p. ej. $2.490.00)', 'Muestra un descuento distinto al vigente'],
+      warn: ['Imagen sin precio visible', 'Problemas visibles: tipeo, texto cortado, comillas sin cerrar'],
+      skip: ['Videos sin precio ni fecha: son generales'] },
+    { key: 'Ubicaciones', compara: ['meta'],
+      ok: ['Todas las versiones del anuncio (Feed, Stories y Reels, Audience Network) llevan a la <b>misma landing</b>'],
+      error: ['La landing cambia según la ubicación'],
+      skip: ['El programa de cada versión lo revisa el control Pieza'] },
+    { key: 'Alertas', compara: ['meta', 'est'],
+      ok: ['Anuncio aprobado, con gasto y con pieza específica para Stories y Reels'],
+      error: ['Anuncio rechazado o con problemas en Meta'],
+      warn: ['Una sola pieza para todas las ubicaciones (sin versión vertical)', 'Activo hace 3 días o más y sin gasto en los últimos 7 días', 'La fecha de inicio del sheet ya pasó'] },
+  ];
+  const ROW = { ok: ['ok', 'check', 'Correcto'], error: ['error', 'x', 'Error'], warn: ['warn', 'alert-circle', 'Revisar'], skip: ['na', 'minus', 'No se marca'] };
+  const cards = METHOD.map((m) => {
+    const c = CONTROLS.find((x) => x.key === m.key);
+    const l = issuesOf(m.key);
+    const e = l.filter((i) => i.severidad === 'error').length, w = l.length - e;
+    const today = l.length ? `${e ? dot('error', `${e} error${e > 1 ? 'es' : ''} hoy`) : ''}${w ? dot('warn', `${w} para revisar`) : ''}` : dot('ok', 'Todo OK hoy');
+    const rows = ['ok', 'error', 'warn', 'skip'].filter((k) => m[k]).map((k) => {
+      const [sev, icon, label] = ROW[k];
+      return `<div class="rule rule-${k}"><div class="rule-label"><span class="m-cell sm ${sev}"><i class="ti ti-${icon}"></i></span>${label}</div>
+        <ul>${m[k].map((t) => `<li>${t}</li>`).join('')}</ul></div>`;
+    }).join('');
+    return `<article class="card method-card">
+      <header class="method-head"><span class="chip-icon"><i class="ti ti-${c.icon}"></i></span>
+        <div><div class="control-title">${esc(c.title)}</div><div class="src-row">${m.compara.map(srcChip).join('<i class="ti ti-arrows-exchange faint"></i>')}</div></div>
+        <button class="today" data-control="${esc(m.key)}" data-tip="Ver las observaciones de hoy">${today}</button></header>
+      <div class="rules">${rows}</div></article>`;
+  }).join('');
+
+  const flow = `<div class="card method-flow">
+    <div class="flow-col"><div class="flow-title">1 · Fuentes</div>
+      ${['est', 'cre', 'meta', 'ia'].map((k) => `<div class="flow-node"><i class="ti ti-${src[k][0]}"></i>${src[k][1]}</div>`).join('')}</div>
+    <i class="ti ti-arrow-right flow-arrow"></i>
+    <div class="flow-col"><div class="flow-title">2 · Cruce</div>
+      <div class="flow-node accent"><i class="ti ti-list-check"></i>${METHOD.length} controles por anuncio activo</div>
+      <div class="flow-note">Solo campañas que empiezan con "2027"</div></div>
+    <i class="ti ti-arrow-right flow-arrow"></i>
+    <div class="flow-col"><div class="flow-title">3 · Resultado</div>
+      <div class="flow-node"><span class="m-cell sm error"><i class="ti ti-x"></i></span><div><b>Error</b><span>No coincide con el plan: hay que corregirlo</span></div></div>
+      <div class="flow-node"><span class="m-cell sm warn"><i class="ti ti-alert-circle"></i></span><div><b>Revisar</b><span>No rompe el plan, pero conviene mirarlo</span></div></div>
+      <div class="flow-node"><span class="m-cell sm ok"><i class="ti ti-check"></i></span><div><b>OK</b><span>Cumple todas las reglas</span></div></div>
+      <div class="flow-node"><span class="m-cell sm na"><i class="ti ti-minus"></i></span><div><b>No se marca</b><span>Todavía no se revisa o es válido a propósito</span></div></div></div>
+  </div>`;
+
+  const STATES = [
+    ['off', 'Esperando URL', 'Pauta Activa, sin landing en Estructura'],
+    ['off', 'Esperando piezas', 'Con landing, sin piezas en Creatividad'],
+    ['off', 'Creatividad pendiente', 'Piezas en Revisión Nods o En proceso'],
+    ['ok', 'En pauta', 'Implementado o Aprobado PUC, con anuncios activos'],
+  ];
+  const states = `<div class="state-flow">${STATES.map(([sev, t, dsc], i) => `${i ? '<i class="ti ti-chevron-right state-arrow"></i>' : ''}
+    <div class="state ${sev}"><div>${dot(sev, t)}</div><p>${dsc}</p></div>`).join('')}</div>
+    <p class="muted" style="font-size:13px;margin:10px 0 0">Los tres primeros estados son parte del flujo normal: se ven en gris en Programas y no generan observaciones. Cuando el programa ya tiene que estar en pauta, se controla que lo esté.</p>`;
+
+  const fuera = [
+    ['calendar-off', 'Campañas que no empiezan con "2027"'],
+    ['player-pause', 'Anuncios pausados (solo se avisa si Meta los rechazó)'],
+    ['wand-off', 'Mejoras automáticas de Meta: la API no coincide con lo que muestra Ads Manager'],
+    ['edit-off', 'Nada se modifica: en Meta y en el sheet solo se lee'],
+  ];
+
+  return `${pageHead('Cómo se revisa', 'Qué se considera <em>correcto</em>.', 'Cada anuncio activo de las campañas 2027 se cruza con el sheet de planificación. Estas son las reglas de cada control, con lo que encontró el reporte de hoy.')}
+    ${flow}
+    <section class="section"><div class="section-head"><h2>Reglas por control</h2></div><div class="method-grid">${cards}</div></section>
+    <section class="section"><div class="section-head"><h2>Estados de un programa</h2></div>${states}</section>
+    <section class="section"><div class="section-head"><h2>Fuera del control</h2></div>
+      <div class="out-grid">${fuera.map(([i, t]) => `<div class="out-item"><i class="ti ti-${i}"></i><span>${t}</span></div>`).join('')}</div></section>`;
 }
 
 // ------------------------------------------------------------ detalle de anuncio
@@ -348,6 +440,7 @@ function openAd(id) {
         <div class="field"><div class="field-label">Título</div><div>${esc(v.titulo || '—')}</div></div>
         <div class="field"><div class="field-label">URL de destino</div><div class="url">${v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.url)}</a>` : '—'}</div>
           ${c ? `<div class="url faint" style="margin-top:4px">Esperada: ${esc(expUrl)}</div>` : ''}</div>
+        ${v.ubicacion === 'Audience Network' ? '<div class="field"><div class="muted">Audience Network está deshabilitado en la cuenta: esta pieza no se publica y no se revisa.</div></div>' : ''}
         ${vis ? `<div class="field"><div class="field-label">Lectura de la pieza (IA)</div>${vis.pendiente ? '<div class="muted">Pendiente: se lee en la próxima actualización diaria.</div>' : vis.error ? `<div class="muted">${esc(vis.error)}</div>` : `
           <div class="copy-box" style="white-space:normal">
             <div>${dot(vis.coincide_programa ? 'ok' : 'error', vis.coincide_programa ? 'Es del programa' : 'No coincide con el programa')} <span class="muted">«${esc(vis.programa_en_pieza || '—')}»</span></div>
@@ -375,7 +468,6 @@ const closeDialog = () => { $('#scrim').hidden = true; };
 function render() {
   const counts = {
     anuncios: R ? activeAds().length : '',
-    mejoras: R ? activeAds().filter((a) => a.mejoras.length).length : '',
     alertas: R ? R.issues.filter((i) => i.control === 'Alertas' || i.severidad === 'warn').length : '',
   };
   $('#nav').innerHTML = PAGES.map((p) => `<button class="nav-item ${st.page === p.id ? 'active' : ''}" data-go="${p.id}"><i class="ti ti-${p.icon}"></i>${p.label}${counts[p.id] !== undefined && counts[p.id] !== '' ? `<span class="count">${counts[p.id]}</span>` : ''}</button>`).join('');
@@ -388,7 +480,7 @@ function render() {
   }
   $('#updated').textContent = 'Actualizado ' + new Date(R.generado).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   $('#acct-meta').textContent = `act_${R.cuenta} · Campañas 2027`;
-  const html = st.control ? pageControl() : { resumen: pageResumen, programas: pageProgramas, anuncios: pageAnuncios, mejoras: pageMejoras, alertas: pageAlertas }[pg.id]();
+  const html = st.control ? pageControl() : { resumen: pageResumen, programas: pageProgramas, anuncios: pageAnuncios, alertas: pageAlertas, metodologia: pageMetodologia }[pg.id]();
   $('#content').innerHTML = `<div class="page-in">${html}</div>`;
   const q = $('#q');
   if (q) {
@@ -404,7 +496,7 @@ document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]');
   if (g) return go(g.dataset.go);
   const ctl = e.target.closest('[data-control]');
-  if (ctl) { const k = ctl.dataset.control; return k === 'Mejoras automáticas' ? go('mejoras') : k === 'Alertas' ? go('alertas') : go('resumen', { control: k }); }
+  if (ctl) { const k = ctl.dataset.control; return k === 'Alertas' ? go('alertas') : go('resumen', { control: k }); }
   const jb = e.target.closest('[data-jira]');
   if (jb) {
     const sc = jb.dataset.jira;
