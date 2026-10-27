@@ -230,6 +230,7 @@ function pageResumen() {
           <div class="kpi-foot">${visionPending() ? `${visionPending()} pendientes` : 'Imágenes y videos al día'}</div></div>
       </div>
     </div>
+    <div style="margin-top:16px">${esperaBanner()}</div>
     <div class="charts-row">
       <div class="card"><div class="section-head"><h2>Observaciones por control</h2>
         <div class="legend"><span class="dot error">Con error</span><span class="dot warn">Para revisar</span></div></div>
@@ -251,6 +252,22 @@ function pageControl() {
   return `${pageHead('Control', esc(c.title) + '.', esc(c.desc), `<div style="display:flex;gap:10px">${jiraBtn('control')}<button class="btn" data-go="resumen"><i class="ti ti-arrow-left"></i>Volver al resumen</button></div>`)}
     ${['Pieza', 'Ubicaciones'].includes(st.control) ? pendingBanner() : ''}
     ${issuesTable(l, { showControl: false })}`;
+}
+
+// Programas en espera (no son error): cuántos hay por motivo y cuáles
+function esperaBanner() {
+  const grupos = [
+    ['sin_landing', 'link-off', 'esperando URL de landing'],
+    ['sin_piezas', 'photo-off', 'esperando piezas'],
+    ['creatividad_pendiente', 'hourglass', 'con creatividad pendiente'],
+  ].map(([estado, icon, txt]) => [icon, txt, R.programas.filter((p) => p.estado === estado).map((p) => p.sigla)])
+    .filter(([, , l]) => l.length);
+  if (!grupos.length) return '';
+  const total = grupos.reduce((n, [, , l]) => n + l.length, 0);
+  return `<div class="banner"><i class="ti ti-clock-pause"></i><div>
+    <b>${total} programa${total > 1 ? 's' : ''} en espera</b> <span class="muted">— están en Pauta Activa pero todavía no corresponde activarlos (no es error):</span>
+    <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">${grupos.map(([icon, txt, l]) =>
+      `<div><i class="ti ti-${icon}" style="font-size:16px;color:var(--text-muted)"></i> <b>${l.length}</b> ${txt}: <span class="muted">${l.map(esc).join(', ')}</span></div>`).join('')}</div></div></div>`;
 }
 
 function pageProgramas() {
@@ -280,6 +297,7 @@ function pageProgramas() {
       <td class="num">${errBySigla[p.sigla] ? `<span class="check error">${errBySigla[p.sigla]}</span>` : '<span class="check ok"><i class="ti ti-circle-check"></i></span>'}</td></tr>`;
   }).join('');
   return `${pageHead('Planificación vs. Meta', 'Programas que deben estar <em>en pauta</em>.', 'Pauta Activa en Estructura 2027 + Implementado o Aprobado PUC en Creatividad 2027. Hacé clic en un programa para ver sus anuncios.')}
+    ${esperaBanner()}
     <div class="table-wrap"><table><thead><tr><th>Estado</th><th>Sigla</th><th>Programa</th><th>Inicio</th><th>Países plan</th><th>Países Meta</th><th class="num">Anuncios activos</th><th class="num">Errores</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
