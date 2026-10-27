@@ -269,7 +269,10 @@ function pageProgramas() {
     return `<tr class="clickable tone-${sev === 'error' ? 'error' : ''}" data-sigla="${esc(p.sigla)}" ${p.estado === 'sin_landing' ? 'data-tip="Sin landing en Estructura 2027: todavía no compartieron la URL, no se puede activar."'
       : p.estado === 'sin_piezas' ? 'data-tip="Pauta Activa y con landing, pero todavía no hay piezas cargadas en Creatividad 2027: no se revisa."'
       : p.estado === 'creatividad_pendiente' ? 'data-tip="Pauta Activa y con landing, pero la creatividad todavía no está Implementada en Creatividad 2027."' : ''}>
-      <td>${dot(sev, txt)}</td><td><b>${esc(p.sigla)}</b></td><td>${esc(p.programa)}</td>
+      <td>${dot(sev, txt)}${p.meta_listo ? (p.meta_listo.listo
+          ? `<div style="margin-top:4px">${dot('ok', 'En Meta: listo · solo prender')}</div>`
+          : `<div style="margin-top:4px" data-tip="${esc(p.meta_listo.falta.join(' · '))}">${dot('warn', `En Meta falta: ${p.meta_listo.falta.length} punto${p.meta_listo.falta.length > 1 ? 's' : ''}`)}</div>`) : ''}</td>
+      <td><b>${esc(p.sigla)}</b></td><td>${esc(p.programa)}</td>
       <td>${p.inicio ? esc(p.inicio.split('-').reverse().join('/')) : '—'}</td>
       <td>${esc(p.paises.join(' · ') || '—')}</td>
       <td>${p.anuncios ? `${dot(paisOk ? 'ok' : 'error', p.paises_meta.join(' · ') || '—')}` : '<span class="faint">—</span>'}</td>

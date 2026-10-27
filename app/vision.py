@@ -68,7 +68,7 @@ def load_cache():
 
 def _jobs(ads, programs):
     for ad in ads:
-        if ad["estado"] != "ACTIVE" or not ad["sigla"] or ad["sigla"] not in programs:
+        if (ad["estado"] != "ACTIVE" and not ad.get("preparacion")) or not ad["sigla"] or ad["sigla"] not in programs:
             continue
         p = programs[ad["sigla"]]
         for v in ad["variantes"]:
@@ -249,17 +249,39 @@ def aplicar_offline():
     spend = {a["id"]: a["gasto7d"] for a in report["anuncios"]}
     links = {a["id"]: a["link"] for a in report["anuncios"]}
 
+    prep = {a["id"]: a for a in report["anuncios"] if a.get("preparacion")}
+
     def issue(control, sev, ad, sigla, detalle, campo=None):
+        if ad["id"] in prep:  # anuncio pausado en preparación: va a su checklist
+            prep[ad["id"]].setdefault("preparacion_obs", []).append(
+                {"control": control, "severidad": sev, "detalle": detalle})
+            return
         report["issues"].append({"control": control, "severidad": sev, "ad_id": ad["id"], "ad_name": ad["name"],
                                  "sigla": sigla or "", "detalle": detalle, "campo": campo,
                                  "link": links.get(ad["id"], ""), "gasto7d": spend.get(ad["id"], 0)})
 
+    for a in prep.values():
+        a["preparacion_obs"] = [o for o in a.get("preparacion_obs", []) if o["control"] != "Pieza"]
     for ad in report["anuncios"]:
         ad["checks"].pop("pieza", None)
         if ad["checks"].get("ubicaciones") == "error" and not any(
                 i["ad_id"] == ad["id"] and i["control"] == "Ubicaciones" for i in report["issues"]):
             ad["checks"]["ubicaciones"] = "ok"
     report["vision"] = apply(report["anuncios"], programs, report["descuento_vigente"], issue)
+    # recalcular "listo en Meta" de los programas pausados con las lecturas nuevas
+    import datetime as dt
+    import qa_engine
+    today = dt.date.today()
+    for p in report["programas"]:
+        if p.get("meta_listo") is None:
+            continue
+        rows = [a for a in report["anuncios"] if a["sigla"] == p["sigla"]]
+        ml = p["meta_listo"] = qa_engine.preparacion(rows, p, today)
+        texto = (f" En Meta está todo listo: solo falta prender ({', '.join(ml['prender']) or 'activar'})." if ml["listo"]
+                 else f" En Meta falta: {'; '.join(ml['falta'][:4])}{' …' if len(ml['falta']) > 4 else ''}.")
+        for i in report["issues"]:
+            if i["control"] == "Programas" and i["sigla"] == p["sigla"] and " En Meta " in i["detalle"]:
+                i["detalle"] = i["detalle"].split(" En Meta ")[0] + texto
     seen, uniq = set(), []
     for i in report["issues"]:
         k = (i["control"], i["ad_id"], i.get("campaign_id"), i["detalle"])

@@ -221,7 +221,9 @@ def load_plan():
             inicio = f"{y}-{mo}-{d}"
         programs[sig] = {
             "sigla": sig, "programa": r[1].strip(), "estado_estructura": r[6].strip(),
-            "modalidad": r[7].strip(), "inicio": inicio, "landing": r[8].strip(),
+            # "#N/A", "#REF!"… son errores de fórmula del sheet: equivalen a no tener landing
+            "modalidad": r[7].strip(), "inicio": inicio,
+            "landing": "" if r[8].strip().startswith("#") else r[8].strip(),
             "paises": [c for c, ok in (("CL", r[9] == "TRUE"), ("PE", r[10] == "TRUE")) if ok],
             "creatividad": None,
         }
@@ -252,6 +254,7 @@ def load_plan():
         # Con landing y piezas, pero la creatividad no está Implementada: todavía no puede salir.
         p["creatividad_pendiente"] = en_pauta and bool(p["landing"]) and not implementado and not p["sin_piezas"]
         p["debe_correr"] = en_pauta and bool(p["landing"]) and implementado
+        p["creatividad_ok"] = implementado
     return programs, discount
 
 
@@ -368,6 +371,39 @@ def enhancements(cr, fmt=None):
     return res
 
 
+def preparacion(rows, p, today):
+    """¿Los anuncios pausados de un programa están listos en Meta y solo falta prenderlos?
+    Usa los mismos controles que a los activos (guardados en row['preparacion_obs'])."""
+    prep = [r for r in rows if r.get("preparacion")]
+    if not prep:
+        return {"listo": False, "falta": ["No hay anuncios 2027 armados para este programa"], "prender": []}
+    falta, prender, paises = [], [], set()
+    for r in prep:
+        me = r.get("meta_estado") or {}
+        if r["estado"] in ("DISAPPROVED", "WITH_ISSUES") or me.get("revision"):
+            falta.append(f"«{r['name']}» está rechazado o tiene observaciones de Meta")
+        elif r["estado"] == "PENDING_REVIEW":
+            falta.append(f"«{r['name']}» está en revisión de Meta")
+        if not me.get("presupuesto"):
+            falta.append(f"«{r['conjunto']}» no tiene presupuesto (ni en la campaña ni en el conjunto)")
+        if me.get("fin_conjunto") and me["fin_conjunto"][:10] < today.isoformat():
+            falta.append(f"«{r['conjunto']}» tiene la fecha de fin vencida ({me['fin_conjunto'][:10]})")
+        for nivel, key in (("campaña", "campana"), ("conjunto", "conjunto"), ("anuncios", "anuncio")):
+            if me.get(key) != "ACTIVE" and nivel not in prender:
+                prender.append(nivel)
+        for o in r.get("preparacion_obs", []):
+            if o["severidad"] == "error":
+                falta.append(f"«{r['name']}» — {o['control']}: {o['detalle']}")
+        if any((v.get("vision") or {}).get("pendiente") for v in r["variantes"]):
+            falta.append(f"«{r['name']}»: piezas sin leer todavía")
+        paises |= set(r["paises"])
+    sin_pais = sorted(set(p["paises"]) - paises)
+    if sin_pais:
+        falta.append(f"Ningún conjunto segmenta {', '.join(sin_pais)}")
+    falta = list(dict.fromkeys(falta))
+    return {"listo": not falta, "falta": falta, "prender": prender}
+
+
 def track_history(programs):
     """Recuerda desde cuándo cada programa tiene su estado actual en Creatividad 2027 y desde
     cuándo está apto (Implementado / Aprobado PUC). Fechas desconocidas (antes del inicio del
@@ -430,8 +466,9 @@ def run(progress=lambda msg: None, use_api=True):
     progress("Leyendo anuncios de Meta")
     ads = meta.get_all(
         f"act_{meta.acct}/ads", limit=40,
-        fields=("id,name,effective_status,created_time,campaign{id,name,effective_status},"
-                "adset{id,name,effective_status,targeting,end_time},"
+        fields=("id,name,status,effective_status,created_time,ad_review_feedback,issues_info,"
+                "campaign{id,name,status,effective_status,daily_budget,lifetime_budget},"
+                "adset{id,name,status,effective_status,targeting,end_time,daily_budget,lifetime_budget},"
                 f"creative.thumbnail_width(600).thumbnail_height(600){{{CREATIVE_FIELDS}}}"),
         filtering=json.dumps([{"field": "campaign.name", "operator": "CONTAIN", "value": CAMPAIGN_PREFIX}]))
     ads = [a for a in ads if a["campaign"]["name"].strip().startswith(CAMPAIGN_PREFIX)]
@@ -453,10 +490,23 @@ def run(progress=lambda msg: None, use_api=True):
         for im in meta.get_all(f"act_{meta.acct}/adimages", hashes=json.dumps(hl[i:i + 50]), fields="hash,url"):
             img_urls[im["hash"]] = im["url"]
 
+    # Anuncios "en preparación": programas que deben estar en pauta y no tienen ningún anuncio activo.
+    # Se revisan con los mismos controles para saber si en Meta están listos y solo falta prenderlos.
+    active_sigs = {ad_sigla(a["name"], a["campaign"]["name"], programs) for a in ads
+                   if a["effective_status"] == "ACTIVE"}
+    prep_ids = set()
+    for a in ads:
+        s = ad_sigla(a["name"], a["campaign"]["name"], programs)
+        listo_plan = programs[s]["debe_correr"] or (programs[s]["esperando_url"] and programs[s]["creatividad_ok"]) if s else False
+        if (a["effective_status"] != "ACTIVE" and s and listo_plan and s not in active_sigs
+                and a["status"] != "ARCHIVED" and a["effective_status"] not in ("ARCHIVED", "DELETED")):
+            prep_ids.add(a["id"])
+    prep_issues = defaultdict(list)
+
     progress("Revisando landings")
     urls = set()
     for a in ads:
-        if a["effective_status"] == "ACTIVE":
+        if a["effective_status"] == "ACTIVE" or a["id"] in prep_ids:
             for v in build_variants(a.get("creative") or {}):
                 if v["url"]:
                     urls.add(v["url"])
@@ -466,6 +516,9 @@ def run(progress=lambda msg: None, use_api=True):
     issues = []
 
     def issue(control, sev, ad, sigla, detalle, campo=None):
+        if ad and ad["id"] in prep_ids:  # anuncio en preparación: va a su checklist, no al reporte
+            prep_issues[ad["id"]].append({"control": control, "severidad": sev, "detalle": detalle})
+            return
         issues.append({"control": control, "severidad": sev, "ad_id": ad["id"] if ad else "",
                        "ad_name": ad["name"] if ad else "", "sigla": sigla or "",
                        "detalle": detalle, "campo": campo,
@@ -501,11 +554,17 @@ def run(progress=lambda msg: None, use_api=True):
                "conjunto": a["adset"]["name"], "paises": geo.get("countries", []),
                "creado": a.get("created_time", "")[:10], "gasto7d": round(spend.get(a["id"], 0)),
                "link": am + a["id"], "variantes": variants, "mejoras": [],
-               "checks": {}}
+               "checks": {}, "preparacion": a["id"] in prep_ids,
+               "meta_estado": {"anuncio": a.get("status"), "conjunto": a["adset"].get("status"),
+                               "campana": a["campaign"].get("status"),
+                               "presupuesto": bool(a["campaign"].get("daily_budget") or a["campaign"].get("lifetime_budget")
+                                                   or a["adset"].get("daily_budget") or a["adset"].get("lifetime_budget")),
+                               "fin_conjunto": a["adset"].get("end_time"),
+                               "revision": bool(a.get("ad_review_feedback")) or bool(a.get("issues_info"))}}
         out_ads.append(row)
         if sig:
             by_sigla[sig].append(row)
-        if not active:
+        if not active and a["id"] not in prep_ids:
             if a["effective_status"] in ("DISAPPROVED", "WITH_ISSUES"):
                 issue("Alertas", "error", a, sig, f"Anuncio {a['effective_status']} en Meta")
             continue
@@ -518,7 +577,7 @@ def run(progress=lambda msg: None, use_api=True):
         if not sig:
             ck["programa"] = "error"
             issue("Programas", "error", a, None, "No se reconoce la sigla del programa en el nombre del anuncio")
-        elif not p["debe_correr"]:
+        elif not p["debe_correr"] and a["id"] not in prep_ids:
             ck["programa"] = "error"
             issue("Programas", "error", a, sig,
                   f"Activo pero no debería: Estructura = '{p['estado_estructura'] or '—'}', "
@@ -605,7 +664,7 @@ def run(progress=lambda msg: None, use_api=True):
 
         # alertas de entrega
         created = a.get("created_time", "")[:10]
-        if created and (today - dt.date.fromisoformat(created)).days >= 3 and spend.get(a["id"], 0) == 0:
+        if active and created and (today - dt.date.fromisoformat(created)).days >= 3 and spend.get(a["id"], 0) == 0:
             issue("Alertas", "warn", a, sig, "Activo hace 3 días o más y sin gasto en los últimos 7 días")
 
     # fotogramas de los videos activos
@@ -637,6 +696,10 @@ def run(progress=lambda msg: None, use_api=True):
     import vision
     vision_info = vision.apply(out_ads, programs, discount, issue,
                                api_key=env.get("ANTHROPIC_API_KEY") if use_api else None)
+
+    for r in out_ads:
+        if r["preparacion"]:
+            r["preparacion_obs"] = prep_issues.get(r["id"], [])
 
     # programas
     hist_inicio = track_history(programs)
@@ -671,6 +734,16 @@ def run(progress=lambda msg: None, use_api=True):
                 sev_prog = "error"
                 atraso = (f" Ya estaba en «{p['creatividad']['estado']}» antes del "
                           f"{dt.date.fromisoformat(hist_inicio[:10]):%d/%m} (el seguimiento de fechas empezó ese día).")
+        p["meta_listo"] = None
+        if p["esperando_url"] and p["creatividad_ok"] and not act and rows:
+            p["meta_listo"] = preparacion(rows, p, today)  # informativo: falta la landing en el sheet
+        if p["debe_correr"] and not act:
+            p["meta_listo"] = preparacion(rows, p, today)
+            ml = p["meta_listo"]
+            if ml["listo"]:
+                atraso += f" En Meta está todo listo: solo falta prender ({', '.join(ml['prender']) or 'activar'})."
+            else:
+                atraso += f" En Meta falta: {'; '.join(ml['falta'][:4])}{' …' if len(ml['falta']) > 4 else ''}."
         if p["debe_correr"]:
             if not act and rows:
                 camps = {}
@@ -702,7 +775,8 @@ def run(progress=lambda msg: None, use_api=True):
                                "link": "", "gasto7d": 0})
         out_programs.append({**{k: p[k] for k in ("sigla", "programa", "estado_estructura", "inicio", "paises",
                                                   "debe_correr", "esperando_url", "creatividad_pendiente", "sin_piezas",
-                                                  "landing", "apto_desde", "estado_creatividad_desde", "dias_atraso")},
+                                                  "landing", "apto_desde", "estado_creatividad_desde", "dias_atraso",
+                                                  "meta_listo")},
                              "estado": estado, "paises_meta": got, "anuncios": len(act),
                              "anuncios_total": len(rows), "gasto7d": sum(r["gasto7d"] for r in act),
                              "creatividad": p["creatividad"]})
