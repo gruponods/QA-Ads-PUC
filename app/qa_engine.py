@@ -368,6 +368,37 @@ def enhancements(cr, fmt=None):
     return res
 
 
+def track_history(programs):
+    """Recuerda desde cuándo cada programa tiene su estado actual en Creatividad 2027 y desde
+    cuándo está apto (Implementado / Aprobado PUC). Fechas desconocidas (antes del inicio del
+    seguimiento) quedan en None. Devuelve la fecha de inicio del seguimiento."""
+    path = DATA / "historial_programas.json"
+    now = dt.datetime.now().isoformat(timespec="minutes")
+    try:
+        hist = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        hist = {}
+    meta = hist.setdefault("_seguimiento", {"inicio": now})
+    for sig, p in programs.items():
+        est = (p.get("creatividad") or {}).get("estado", "")
+        apto = bool(p["debe_correr"])
+        h = hist.get(sig)
+        if h is None:
+            h = {"estado": est, "estado_desde": None, "apto": apto, "apto_desde": None}
+        else:
+            if h["estado"] != est:
+                h["estado"], h["estado_desde"] = est, now
+            if apto and not h["apto"]:
+                h["apto_desde"] = now
+            if not apto:
+                h["apto_desde"] = None
+            h["apto"] = apto
+        hist[sig] = h
+        p["apto_desde"], p["estado_creatividad_desde"] = h["apto_desde"], h["estado_desde"]
+    path.write_text(json.dumps(hist, ensure_ascii=False, indent=1), encoding="utf-8")
+    return meta["inicio"]
+
+
 def promo_deadline(text, today):
     """Detecta 'hasta el 30 de noviembre' y devuelve la fecha (año actual o siguiente)."""
     m = re.search(r"hasta el (\d{1,2}) de (\w+)", (text or "").lower())
@@ -608,6 +639,7 @@ def run(progress=lambda msg: None, use_api=True):
                                api_key=env.get("ANTHROPIC_API_KEY") if use_api else None)
 
     # programas
+    hist_inicio = track_history(programs)
     out_programs = []
     for sig, p in sorted(programs.items()):
         rows = by_sigla.get(sig, [])
@@ -625,6 +657,20 @@ def run(progress=lambda msg: None, use_api=True):
             estado = "ok" if (p["debe_correr"] and act) else ("pausado" if p["debe_correr"] and rows else
                                                             "sin_anuncios" if p["debe_correr"] else "sobra")
         got = sorted({c for r in act for c in r["paises"]})
+        # Hace cuánto quedó apto (Aprobado PUC / Implementado): no es lo mismo hoy que hace días
+        p["dias_atraso"] = None
+        if p["debe_correr"] and not act:
+            if p["apto_desde"]:
+                p["dias_atraso"] = (today - dt.date.fromisoformat(p["apto_desde"][:10])).days
+                cuando = ("hoy" if p["dias_atraso"] == 0 else
+                          f"el {dt.date.fromisoformat(p['apto_desde'][:10]):%d/%m}, hace {p['dias_atraso']} "
+                          f"día{'s' if p['dias_atraso'] != 1 else ''}")
+                sev_prog = "warn" if p["dias_atraso"] == 0 else "error"
+                atraso = f" Pasó a «{p['creatividad']['estado']}» en Creatividad 2027 {cuando}."
+            else:
+                sev_prog = "error"
+                atraso = (f" Ya estaba en «{p['creatividad']['estado']}» antes del "
+                          f"{dt.date.fromisoformat(hist_inicio[:10]):%d/%m} (el seguimiento de fechas empezó ese día).")
         if p["debe_correr"]:
             if not act and rows:
                 camps = {}
@@ -634,13 +680,13 @@ def run(progress=lambda msg: None, use_api=True):
                     estado_camp = {"PAUSED": "pausada", "CAMPAIGN_PAUSED": "pausada", "ARCHIVED": "archivada",
                                    "ADSET_PAUSED": "activa pero con los conjuntos pausados"}.get(
                         r["estado_campana"] if r["estado_campana"] != "ACTIVE" else r["estado"], "sin anuncios activos")
-                    issues.append({"control": "Programas", "severidad": "error", "ad_id": "", "ad_name": "",
+                    issues.append({"control": "Programas", "severidad": sev_prog, "ad_id": "", "ad_name": "",
                                    "campaign_id": cid, "campaign_name": r["campana"], "sigla": sig,
-                                   "detalle": f"El programa debería estar en pauta y la campaña está {estado_camp}",
+                                   "detalle": f"El programa debería estar en pauta y la campaña está {estado_camp}.{atraso}",
                                    "campo": None, "link": camp_link + cid, "gasto7d": 0})
             elif not rows:
-                issues.append({"control": "Programas", "severidad": "error", "ad_id": "", "ad_name": "", "sigla": sig,
-                               "detalle": "Debería estar activo y no tiene anuncios 2027 creados", "campo": None,
+                issues.append({"control": "Programas", "severidad": sev_prog, "ad_id": "", "ad_name": "", "sigla": sig,
+                               "detalle": f"Debería estar activo y no tiene anuncios 2027 creados.{atraso}", "campo": None,
                                "link": "", "gasto7d": 0})
             missing = sorted(set(p["paises"]) - set(got))
             if act and missing:
@@ -656,7 +702,7 @@ def run(progress=lambda msg: None, use_api=True):
                                "link": "", "gasto7d": 0})
         out_programs.append({**{k: p[k] for k in ("sigla", "programa", "estado_estructura", "inicio", "paises",
                                                   "debe_correr", "esperando_url", "creatividad_pendiente", "sin_piezas",
-                                                  "landing")},
+                                                  "landing", "apto_desde", "estado_creatividad_desde", "dias_atraso")},
                              "estado": estado, "paises_meta": got, "anuncios": len(act),
                              "anuncios_total": len(rows), "gasto7d": sum(r["gasto7d"] for r in act),
                              "creatividad": p["creatividad"]})
