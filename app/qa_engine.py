@@ -514,6 +514,8 @@ def run(progress=lambda msg: None, use_api=True):
             # no es error; la comparación queda visible en el detalle del anuncio.
             ck["url"] = ck["descuento"] = "ok"
             for v in variants:
+                if v["ubicacion"] == "Audience Network":
+                    continue  # Audience Network está deshabilitado en la cuenta: no se publica
                 body = v["copy"] or ""
                 where = f" ({v['ubicacion']})" if len(variants) > 1 else ""
                 if f"{discount}%" not in body.replace(" %", "%"):

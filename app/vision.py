@@ -72,6 +72,8 @@ def _jobs(ads, programs):
             continue
         p = programs[ad["sigla"]]
         for v in ad["variantes"]:
+            if v.get("ubicacion") == "Audience Network":
+                continue  # la cuenta tiene Audience Network deshabilitado: esa pieza no se publica
             es_video = bool(v.get("video_id"))
             img = v.get("frames_img") if es_video else v.get("local_img")
             if img:
