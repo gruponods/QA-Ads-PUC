@@ -155,16 +155,19 @@ def _evaluate(ad, v, res, p, discount, issue, es_video):
     where = f" ({v['ubicacion']})" if len(ad["variantes"]) > 1 else ""
     fuente = "el video" if es_video else "la pieza"
     state = ad["checks"].get("pieza") if ad["checks"].get("pieza") in ("warn", "error") else "ok"
+    # Messenger, Marketplace, columna derecha…: se marca para revisar, no como error
+    grave = "warn" if secundaria(v) else "error"
+    peor = lambda st: "error" if "error" in (st, grave) else "warn"
     if not res["coincide_programa"]:
-        state = "error"
-        issue("Pieza", "error", ref, ad["sigla"],
+        state = peor(state)
+        issue("Pieza", grave, ref, ad["sigla"],
               f"{fuente.capitalize()}{where} no parece ser de {p['programa']} (dice: «{res['programa_en_pieza'] or '—'}»)", "pieza")
     esperados = {digits(c.get(k)) for k in ("precio_lista", "precio_dcto", "usd_lista", "usd_dcto")} | {digits(dcto_txt)}
     esperados -= {""}
     vistos = {digits(x) for x in res["precios"]} - {""}
     if vistos and esperados and vistos - esperados:
-        state = "error"
-        issue("Pieza", "error", ref, ad["sigla"],
+        state = peor(state)
+        issue("Pieza", grave, ref, ad["sigla"],
               f"Precio en {fuente}{where}: {', '.join(res['precios'])}. En Creatividad 2027: "
               f"{c.get('precio_lista')} lista / {dcto_txt or '—'} con {discount}%", "pieza")
     elif not vistos and esperados and not es_video:
@@ -172,8 +175,8 @@ def _evaluate(ad, v, res, p, discount, issue, es_video):
         issue("Pieza", "warn", ref, ad["sigla"], f"No se ve el precio en {fuente}{where}", "pieza")
     otros = sorted({re.sub(r"\D", "", d) for d in res["descuentos"]} - {"", discount})
     if otros:
-        state = "error"
-        issue("Pieza", "error", ref, ad["sigla"],
+        state = peor(state)
+        issue("Pieza", grave, ref, ad["sigla"],
               f"{fuente.capitalize()}{where} muestra {', '.join(o + '%' for o in otros)} y el descuento vigente es {discount}%", "pieza")
     obs = res.get("observaciones", "").strip()
     if es_video:
@@ -182,6 +185,11 @@ def _evaluate(ad, v, res, p, discount, issue, es_video):
         state = "warn" if state == "ok" else state
         issue("Pieza", "warn", ref, ad["sigla"], f"Revisar {fuente}{where}: {obs}", "pieza")
     ad["checks"]["pieza"] = state
+
+
+def secundaria(v):
+    """Ubicación de bajo alcance (la pieza por defecto cuando hay regla de Feed, u otras sin Feed)."""
+    return v.get("ubicacion", "").startswith("Otras ubicaciones")
 
 
 def sin_precio_fecha(obs):
@@ -203,15 +211,18 @@ def _cross_placements(ads, issue):
         if len(read) < 2:
             continue
         ref = {"id": ad["id"], "name": ad["name"]}
-        flags = {v["vision"]["coincide_programa"] for v in read}
-        names = [simple(v["vision"]["programa_en_pieza"]) for v in read]
-        distinto = len(flags) > 1 or any(
-            a and b and a not in b and b not in a and SequenceMatcher(None, a, b).ratio() < 0.6
-            for i, a in enumerate(names) for b in names[i + 1:])
-        if distinto:
+        def distinto(vs):
+            flags = {v["vision"]["coincide_programa"] for v in vs}
+            names = [simple(v["vision"]["programa_en_pieza"]) for v in vs]
+            return len(flags) > 1 or any(
+                a and b and a not in b and b not in a and SequenceMatcher(None, a, b).ratio() < 0.6
+                for i, a in enumerate(names) for b in names[i + 1:])
+        if distinto(read):
+            # si la diferencia está solo en ubicaciones secundarias, queda para revisar
+            sev = "error" if distinto([v for v in read if not secundaria(v)]) else "warn"
             detalle = " / ".join(f"{v['ubicacion']}: «{v['vision']['programa_en_pieza'] or '—'}»" for v in read)
-            issue("Ubicaciones", "error", ref, ad["sigla"], f"Las ubicaciones muestran programas distintos — {detalle}", "pieza")
-            ad["checks"]["ubicaciones"] = "error"
+            issue("Ubicaciones", sev, ref, ad["sigla"], f"Las ubicaciones muestran programas distintos — {detalle}", "pieza")
+            ad["checks"]["ubicaciones"] = sev
 
 
 def merge(results):
@@ -267,7 +278,7 @@ def aplicar_offline():
         a["preparacion_obs"] = [o for o in a.get("preparacion_obs", []) if o["control"] != "Pieza"]
     for ad in report["anuncios"]:
         ad["checks"].pop("pieza", None)
-        if ad["checks"].get("ubicaciones") == "error" and not any(
+        if ad["checks"].get("ubicaciones") in ("warn", "error") and not any(
                 i["ad_id"] == ad["id"] and i["control"] == "Ubicaciones" for i in report["issues"]):
             ad["checks"]["ubicaciones"] = "ok"
     report["vision"] = apply(report["anuncios"], programs, report["descuento_vigente"], issue)

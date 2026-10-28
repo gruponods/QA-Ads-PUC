@@ -370,7 +370,7 @@ function pageMetodologia() {
     { key: 'Pieza', compara: ['ia', 'cre'],
       ok: ['La pieza es del programa del anuncio', 'Los precios visibles coinciden con el sheet (lista, con descuento o USD)', `Si muestra un descuento, es el ${d}`],
       error: ['La pieza es de otro programa', 'Un precio no coincide con el sheet (p. ej. $2.490.00)', 'Muestra un descuento distinto al vigente'],
-      warn: ['Imagen sin precio visible', 'Problemas visibles: tipeo, texto cortado, comillas sin cerrar'],
+      warn: ['Imagen sin precio visible', 'Problemas visibles: tipeo, texto cortado, comillas sin cerrar', 'Pieza por defecto (Messenger, Marketplace, columna derecha…) de otro programa o con otro precio, cuando Feed, Stories y Búsqueda están bien'],
       skip: ['Videos sin precio ni fecha: son generales'] },
     { key: 'Ubicaciones', compara: ['meta'],
       ok: ['Todas las versiones del anuncio (Feed, Stories y Reels, Audience Network) llevan a la <b>misma landing</b>'],
