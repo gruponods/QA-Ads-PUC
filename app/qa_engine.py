@@ -508,9 +508,9 @@ def run(progress=lambda msg: None, use_api=True):
     progress("Leyendo anuncios de Meta")
     ads = meta.get_all(
         f"act_{meta.acct}/ads", limit=40,
-        fields=("id,name,status,effective_status,created_time,ad_review_feedback,issues_info,"
-                "campaign{id,name,status,effective_status,daily_budget,lifetime_budget},"
-                "adset{id,name,status,effective_status,targeting,end_time,daily_budget,lifetime_budget},"
+        fields=("id,name,status,effective_status,created_time,updated_time,ad_review_feedback,issues_info,"
+                "campaign{id,name,status,effective_status,daily_budget,lifetime_budget,updated_time},"
+                "adset{id,name,status,effective_status,targeting,end_time,daily_budget,lifetime_budget,updated_time},"
                 f"creative.thumbnail_width(600).thumbnail_height(600){{{CREATIVE_FIELDS}}}"),
         filtering=json.dumps([{"field": "campaign.name", "operator": "CONTAIN", "value": CAMPAIGN_PREFIX}]))
     ads = [a for a in ads if a["campaign"]["name"].strip().startswith(CAMPAIGN_PREFIX)]
@@ -707,9 +707,11 @@ def run(progress=lambda msg: None, use_api=True):
         # para cuando haya una fuente confiable.
 
         # alertas de entrega
-        created = a.get("created_time", "")[:10]
-        if active and created and (today - dt.date.fromisoformat(created)).days >= 3 and spend.get(a["id"], 0) == 0:
-            issue("Alertas", "warn", a, sig, "Activo hace 3 días o más y sin gasto en los últimos 7 días")
+        # desde el último cambio del anuncio, conjunto o campaña (p. ej. cuando se prendió), no desde que se creó
+        cambios = [x.get("updated_time") or x.get("created_time") or "" for x in (a, a.get("adset") or {}, a["campaign"])]
+        desde = max(c[:10] for c in cambios)
+        if active and desde and (today - dt.date.fromisoformat(desde)).days >= 3 and spend.get(a["id"], 0) == 0:
+            issue("Alertas", "warn", a, sig, "Activo, sin gasto en los últimos 7 días y sin cambios hace 3 días o más")
 
     # fotogramas de los videos activos
     progress("Extrayendo fotogramas de los videos")

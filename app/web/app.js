@@ -379,7 +379,7 @@ function pageMetodologia() {
     { key: 'Alertas', compara: ['meta', 'est'],
       ok: ['Anuncio aprobado, con gasto y con pieza específica para Stories y Reels'],
       error: ['Anuncio rechazado o con problemas en Meta'],
-      warn: ['Una sola pieza para todas las ubicaciones (sin versión vertical)', 'Activo hace 3 días o más y sin gasto en los últimos 7 días', 'La fecha de inicio del sheet ya pasó'] },
+      warn: ['Una sola pieza para todas las ubicaciones (sin versión vertical)', 'Activo, sin gasto en los últimos 7 días y sin cambios hace 3 días o más', 'La fecha de inicio del sheet ya pasó'] },
   ];
   const ROW = { ok: ['ok', 'check', 'Correcto'], error: ['error', 'x', 'Error'], warn: ['warn', 'alert-circle', 'Revisar'], skip: ['na', 'minus', 'No se marca'] };
   const cards = METHOD.map((m) => {
