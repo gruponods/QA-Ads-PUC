@@ -149,6 +149,8 @@ def apply(ads, programs, discount, issue, api_key=None):
 
 def _evaluate(ad, v, res, p, discount, issue, es_video):
     c = p.get("creatividad") or {}
+    discount = p.get("descuento") or discount  # descuento propio del programa (p. ej. DEIA 25%)
+    dcto_txt = c.get("precio_dcto") or p.get("precio_dcto_calc") or ""
     ref = {"id": ad["id"], "name": ad["name"]}
     where = f" ({v['ubicacion']})" if len(ad["variantes"]) > 1 else ""
     fuente = "el video" if es_video else "la pieza"
@@ -157,13 +159,14 @@ def _evaluate(ad, v, res, p, discount, issue, es_video):
         state = "error"
         issue("Pieza", "error", ref, ad["sigla"],
               f"{fuente.capitalize()}{where} no parece ser de {p['programa']} (dice: «{res['programa_en_pieza'] or '—'}»)", "pieza")
-    esperados = {digits(c.get(k)) for k in ("precio_lista", "precio_dcto", "usd_lista", "usd_dcto")} - {""}
+    esperados = {digits(c.get(k)) for k in ("precio_lista", "precio_dcto", "usd_lista", "usd_dcto")} | {digits(dcto_txt)}
+    esperados -= {""}
     vistos = {digits(x) for x in res["precios"]} - {""}
     if vistos and esperados and vistos - esperados:
         state = "error"
         issue("Pieza", "error", ref, ad["sigla"],
               f"Precio en {fuente}{where}: {', '.join(res['precios'])}. En Creatividad 2027: "
-              f"{c.get('precio_lista')} lista / {c.get('precio_dcto')} con {discount}%", "pieza")
+              f"{c.get('precio_lista')} lista / {dcto_txt or '—'} con {discount}%", "pieza")
     elif not vistos and esperados and not es_video:
         state = "warn" if state == "ok" else state
         issue("Pieza", "warn", ref, ad["sigla"], f"No se ve el precio en {fuente}{where}", "pieza")

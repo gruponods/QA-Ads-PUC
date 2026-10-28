@@ -14,7 +14,7 @@ const PAGES = [
 const CONTROLS = [
   { key: 'Programas', icon: 'school', title: 'Programas en pauta', desc: 'Lo activo en Meta contra Estructura 2027 (Pauta Activa) y Creatividad 2027 (Implementado o Aprobado PUC).' },
   { key: 'País', icon: 'world', title: 'País', desc: 'Los conjuntos de anuncios segmentan los países tildados en Estructura (Chile / Perú).' },
-  { key: 'Descuento', icon: 'discount', title: 'Descuento', desc: 'El copy menciona el descuento vigente y el plazo no está vencido.' },
+  { key: 'Descuento', icon: 'discount', title: 'Descuento', desc: 'El copy menciona el descuento del programa (el general o el propio que indique el sheet, p. ej. DEIA 25%) y el plazo no está vencido.' },
   { key: 'URL', icon: 'link', title: 'URL y UTM', desc: 'Landing, ref y UTMs como en Creatividad 2027 (video2, img2… son válidos); la landing responde.' },
   { key: 'Pieza', icon: 'photo-scan', title: 'Pieza: programa y precio', desc: 'La IA lee la pieza: que sea del programa y que el precio sea el del sheet.' },
   { key: 'Ubicaciones', icon: 'layout-columns', title: 'Ubicaciones', desc: 'Stories/Reels y Feed muestran el mismo programa y llevan a la misma landing.' },

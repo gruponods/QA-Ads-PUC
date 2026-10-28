@@ -257,7 +257,25 @@ def load_plan():
         p["creatividad_ok"] = implementado
         # Regla para estar activo: Pauta Activa + Implementado o Aprobado PUC. Cualquier otra combinación, no.
         p["puede_activo"] = en_pauta and implementado
+        p["descuento"], p["precio_dcto_calc"] = program_discount(c, discount)
     return programs, discount
+
+
+def program_discount(c, default):
+    """Descuento propio del programa: lo que diga Observaciones PUC ("…25% de descuento"), o el que
+    surge de los precios de Creatividad 2027; si no, el general. Devuelve (descuento, precio con dcto)."""
+    if not c:
+        return default, ""
+    d = None
+    m = re.findall(r"(\d{1,2})\s*%\s*de\s+descuento", c.get("observaciones") or "", re.I)
+    if m:
+        d = m[-1]
+    lista, dcto = digits(c.get("precio_lista")), digits(c.get("precio_dcto"))
+    if not d and lista and dcto:
+        d = str(round(100 * (1 - int(dcto) / int(lista))))
+    d = d or default
+    calc = c.get("precio_dcto") or (f"${int(lista) * (100 - int(d)) // 100:,}".replace(",", ".") if lista else "")
+    return d, calc
 
 
 # ---------------------------------------------------------------- anuncios
@@ -611,9 +629,10 @@ def run(progress=lambda msg: None, use_api=True):
                     continue  # Audience Network está deshabilitado en la cuenta: no se publica
                 body = v["copy"] or ""
                 where = f" ({v['ubicacion']})" if len(variants) > 1 else ""
-                if f"{discount}%" not in body.replace(" %", "%"):
+                dto = p.get("descuento") or discount  # cada programa puede tener su propio descuento
+                if f"{dto}%" not in body.replace(" %", "%"):
                     ck["descuento"] = "error"
-                    issue("Descuento", "error", a, sig, f"El copy{where} no menciona el {discount}% de descuento")
+                    issue("Descuento", "error", a, sig, f"El copy{where} no menciona el {dto}% de descuento")
                 dl = promo_deadline(body, today)
                 if dl and dl < today:
                     ck["descuento"] = "error"
@@ -784,6 +803,7 @@ def run(progress=lambda msg: None, use_api=True):
                                "link": "", "gasto7d": 0})
         out_programs.append({**{k: p[k] for k in ("sigla", "programa", "estado_estructura", "inicio", "paises",
                                                   "debe_correr", "puede_activo", "esperando_url", "creatividad_pendiente", "sin_piezas",
+                                                  "descuento", "precio_dcto_calc",
                                                   "landing", "apto_desde", "estado_creatividad_desde", "dias_atraso",
                                                   "meta_listo")},
                              "estado": estado, "paises_meta": got, "anuncios": len(act),
