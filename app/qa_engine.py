@@ -307,7 +307,29 @@ def placement_of(rule):
         return "Stories y Reels"
     if spec.get("publisher_platforms") == ["audience_network"]:
         return "Audience Network"
-    return "Feed y resto"
+    if any(p in ("feed", "stream", "profile_feed", "explore_home") for p in pos):
+        return "Feed"
+    if pos and set(pos) <= {"search", "ig_search"}:
+        return "Búsqueda"
+    if not spec.get("publisher_platforms") and not pos:
+        # regla sin ubicaciones: es la pieza por defecto para todo lo que no cubren las otras reglas
+        return DEFAULT_PLACEMENT
+    return "Otras ubicaciones"
+
+
+DEFAULT_PLACEMENT = "__por_defecto__"
+
+
+def default_label(variants):
+    """La pieza por defecto cubre el Feed si no hay una regla propia de Feed; si la hay, solo cubre
+    las ubicaciones que quedan (Messenger, Marketplace, columna derecha…)."""
+    has_feed = any(v["ubicacion"] == "Feed" for v in variants)
+    label = ("Otras ubicaciones (por defecto: Messenger, Marketplace, columna derecha…)" if has_feed
+             else "Feed y resto")
+    for v in variants:
+        if v["ubicacion"] == DEFAULT_PLACEMENT:
+            v["ubicacion"] = label
+    return variants
 
 
 def build_variants(cr):
@@ -366,7 +388,7 @@ def build_variants(cr):
         out.append({"ubicacion": "Todas", "copy": cr.get("body", ""), "titulo": cr.get("title", ""),
                     "url": None, "image_hash": cr.get("image_hash"), "video_id": cr.get("video_id"),
                     "thumb": cr.get("thumbnail_url")})
-    return out
+    return default_label(out)
 
 
 # La API las devuelve OPT_IN pero Ads Manager no las muestra ni deja apagarlas: no se marcan.
