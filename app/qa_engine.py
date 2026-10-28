@@ -255,6 +255,8 @@ def load_plan():
         p["creatividad_pendiente"] = en_pauta and bool(p["landing"]) and not implementado and not p["sin_piezas"]
         p["debe_correr"] = en_pauta and bool(p["landing"]) and implementado
         p["creatividad_ok"] = implementado
+        # Regla para estar activo: Pauta Activa + Implementado o Aprobado PUC. Cualquier otra combinación, no.
+        p["puede_activo"] = en_pauta and implementado
     return programs, discount
 
 
@@ -577,10 +579,11 @@ def run(progress=lambda msg: None, use_api=True):
         if not sig:
             ck["programa"] = "error"
             issue("Programas", "error", a, None, "No se reconoce la sigla del programa en el nombre del anuncio")
-        elif not p["debe_correr"] and a["id"] not in prep_ids:
+        elif not p["puede_activo"] and a["id"] not in prep_ids:
             ck["programa"] = "error"
             issue("Programas", "error", a, sig,
-                  f"Activo pero no debería: Estructura = '{p['estado_estructura'] or '—'}', "
+                  f"Activo pero no debería: para estar activo necesita Pauta Activa en Estructura + Implementado o "
+                  f"Aprobado PUC en Creatividad. Hoy: Estructura = '{p['estado_estructura'] or '—'}', "
                   f"Creatividad = '{(c.get('estado') or 'sin fila')}'")
         else:
             ck["programa"] = "ok"
@@ -716,9 +719,15 @@ def run(progress=lambda msg: None, use_api=True):
         elif p["creatividad_pendiente"] and not act:
             # Creatividad en revisión: es el flujo normal, no una observación (solo se muestra el estado).
             estado = "creatividad_pendiente"
+        elif act:
+            # Puede estar activo: Pauta Activa + Implementado o Aprobado PUC (la landing no bloquea)
+            estado = "ok" if p["puede_activo"] else "sobra"
         else:
-            estado = "ok" if (p["debe_correr"] and act) else ("pausado" if p["debe_correr"] and rows else
-                                                            "sin_anuncios" if p["debe_correr"] else "sobra")
+            estado = "pausado" if p["debe_correr"] and rows else "sin_anuncios" if p["debe_correr"] else "sobra"
+        if act and p["puede_activo"] and (p["creatividad"] or {}).get("estado", "").lower().startswith("aprobado puc"):
+            issues.append({"control": "Programas", "severidad": "warn", "ad_id": "", "ad_name": "", "sigla": sig,
+                           "detalle": "Activo con «Aprobado PUC» en Creatividad 2027: está bien, solo falta pasarlo a "
+                                      "«Implementado» en el sheet (no es error)", "campo": None, "link": "", "gasto7d": 0})
         got = sorted({c for r in act for c in r["paises"]})
         # Hace cuánto quedó apto (Aprobado PUC / Implementado): no es lo mismo hoy que hace días
         p["dias_atraso"] = None
@@ -744,7 +753,7 @@ def run(progress=lambda msg: None, use_api=True):
                 atraso += f" En Meta está todo listo: solo falta prender ({', '.join(ml['prender']) or 'activar'})."
             else:
                 atraso += f" En Meta falta: {'; '.join(ml['falta'][:4])}{' …' if len(ml['falta']) > 4 else ''}."
-        if p["debe_correr"]:
+        if p["debe_correr"] or (act and p["puede_activo"]):
             if not act and rows:
                 camps = {}
                 for r in rows:
@@ -774,7 +783,7 @@ def run(progress=lambda msg: None, use_api=True):
                                "detalle": f"La fecha de inicio del sheet ({p['inicio']}) ya pasó", "campo": None,
                                "link": "", "gasto7d": 0})
         out_programs.append({**{k: p[k] for k in ("sigla", "programa", "estado_estructura", "inicio", "paises",
-                                                  "debe_correr", "esperando_url", "creatividad_pendiente", "sin_piezas",
+                                                  "debe_correr", "puede_activo", "esperando_url", "creatividad_pendiente", "sin_piezas",
                                                   "landing", "apto_desde", "estado_creatividad_desde", "dias_atraso",
                                                   "meta_listo")},
                              "estado": estado, "paises_meta": got, "anuncios": len(act),

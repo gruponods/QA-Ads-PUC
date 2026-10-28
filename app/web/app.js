@@ -149,7 +149,8 @@ const MATRIX_SHORT = { Programas: 'Programa', 'País': 'País', Descuento: 'Dcto
 
 function pageResumen() {
   const act = activeAds();
-  const debe = R.programas.filter((p) => p.debe_correr);
+  // En pauta = programas que tienen que estar activos + los aptos que ya están activos (aunque falte la landing en Estructura)
+  const debe = R.programas.filter((p) => p.debe_correr || (p.puede_activo && p.estado === 'ok'));
   const okProg = debe.filter((p) => p.estado === 'ok').length;
   const errIds = errAdIds();
   const adsErr = act.filter((a) => errIds.has(a.id));
@@ -348,8 +349,8 @@ function pageMetodologia() {
   const srcChip = (k) => `<span class="src-chip"><i class="ti ti-${src[k][0]}"></i>${src[k][1]}</span>`;
   const METHOD = [
     { key: 'Programas', compara: ['est', 'cre', 'meta'],
-      ok: ['Programa en <b>Pauta Activa</b> en Estructura, con landing y creatividad <b>Implementado</b> o <b>Aprobado PUC</b>, y con anuncios activos'],
-      error: ['Anuncio activo de un programa que no tiene que estar en pauta', 'Programa que tiene que estar en pauta con la campaña pausada, archivada o con los conjuntos pausados',
+      ok: ['Puede estar activo solo si está en <b>Pauta Activa</b> en Estructura y la creatividad está <b>Implementado</b> o <b>Aprobado PUC</b> (Aprobado PUC se avisa para pasarlo a Implementado, no es error)'],
+      error: ['Anuncio activo con cualquier otra combinación de Estructura y Creatividad', 'Programa que tiene que estar en pauta con la campaña pausada, archivada o con los conjuntos pausados',
         'Programa que tiene que estar en pauta y no tiene anuncios 2027 creados', 'No se reconoce la sigla del programa en el nombre del anuncio'],
       skip: ['Sin landing en Estructura → <b>Esperando URL</b>', 'Columna Piezas vacía en Creatividad → <b>Esperando piezas</b>', 'Creatividad en Revisión Nods o En proceso → <b>Creatividad pendiente</b>'] },
     { key: 'País', compara: ['est', 'meta'],
