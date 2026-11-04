@@ -303,6 +303,7 @@ def aplicar_offline():
             seen.add(k)
             uniq.append(i)
     report["issues"] = uniq
+    qa_engine.apply_exceptions(report)
     path.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"Reporte actualizado: {report['vision']}")
 

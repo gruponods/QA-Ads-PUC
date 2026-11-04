@@ -18,6 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("DATA_DIR") or ROOT / "data")
 IMG_DIR = DATA / "img"
+EXCEPCIONES = ROOT / "app" / "excepciones.json"
 SHEET_ID = "1zLZYqlRMpLiTZhsZIVwFC-4T3SezFE6HqMUcQO0ZmKY"
 CAMPAIGN_PREFIX = "2027"
 UA = {"User-Agent": "Mozilla/5.0 (QA anuncios NODS)"}
@@ -227,17 +228,34 @@ def load_plan():
             "paises": [c for c, ok in (("CL", r[9] == "TRUE"), ("PE", r[10] == "TRUE")) if ok],
             "creatividad": None,
         }
+    # Las columnas se buscan por su encabezado: en el sheet agregan o borran columnas
+    # (p. ej. se eliminó "Check PX") y con índices fijos todo queda corrido.
+    head = [h.strip().lower() for h in cre[0]]
+
+    def col(*nombres):
+        for n in nombres:
+            for i, h in enumerate(head):
+                if h == n or h.startswith(n):
+                    return i
+        raise RuntimeError(f"No encontré la columna '{nombres[0]}' en Creatividad 2027")
+
+    c_estado, c_copy, c_url = col("estado"), col("copy"), col("url")
+    c_ref, c_src, c_med = col("ref"), col("source"), col("medium")
+    c_camp, c_link = col("&utm_campaign=", "utm_campaign", "campaign"), col("link final")
+    c_lista, c_usd = col("precio lista"), col("precio dólares", "precio dolares")
+    c_obs, c_piezas = col("observaciones"), col("piezas")
     for r in cre[1:]:
+        r = r + [""] * (len(head) - len(r))  # el CSV recorta celdas vacías al final
         sig = r[4].strip().upper()
         if not sig:
             continue
-        row = {"version": r[3].strip(), "estado": r[13].strip(), "check_px": r[14].strip(),
-               "precio_lista": r[6].strip(), "precio_dcto": r[7].strip(),
-               "usd_lista": r[8].strip(), "usd_dcto": r[9].strip(), "copy": r[15].strip(),
-               "url_base": r[17].strip(), "ref": r[18].split("=", 1)[-1].strip(),
-               "utm_source": r[19].split("=", 1)[-1].strip(), "utm_medium": r[20].split("=", 1)[-1].strip(),
-               "utm_campaign": r[21].split("=", 1)[-1].strip(), "link_final": r[23].strip(),
-               "observaciones": r[12].strip(), "piezas": r[11].strip()}
+        row = {"version": r[3].strip(), "estado": r[c_estado].strip(),
+               "precio_lista": r[c_lista].strip(), "precio_dcto": r[c_lista + 1].strip(),
+               "usd_lista": r[c_usd].strip(), "usd_dcto": r[c_usd + 1].strip(), "copy": r[c_copy].strip(),
+               "url_base": r[c_url].strip(), "ref": r[c_ref].split("=", 1)[-1].strip(),
+               "utm_source": r[c_src].split("=", 1)[-1].strip(), "utm_medium": r[c_med].split("=", 1)[-1].strip(),
+               "utm_campaign": r[c_camp].split("=", 1)[-1].strip(), "link_final": r[c_link].strip(),
+               "observaciones": r[c_obs].strip(), "piezas": r[c_piezas].strip()}
         programs.setdefault(sig, {"sigla": sig, "programa": r[2].strip(), "estado_estructura": "",
                                   "modalidad": r[5].strip(), "inicio": None, "landing": "",
                                   "paises": [], "creatividad": None})
@@ -444,6 +462,29 @@ def preparacion(rows, p, today):
         falta.append(f"Ningún conjunto segmenta {', '.join(sin_pais)}")
     falta = list(dict.fromkeys(falta))
     return {"listo": not falta, "falta": falta, "prender": prender}
+
+
+def apply_exceptions(report):
+    """Saca del reporte lo que el equipo ya revisó y dejó así a propósito (app/excepciones.json:
+    lista de {ad_id, control, motivo, fecha}). Quedan aparte en report["ignoradas"]."""
+    try:
+        exc = {(e["ad_id"], e["control"]): e for e in json.loads(EXCEPCIONES.read_text(encoding="utf-8"))}
+    except FileNotFoundError:
+        exc = {}
+    keep, ignored = [], []
+    for i in report["issues"]:
+        e = exc.get((i["ad_id"], i["control"]))
+        if e:
+            ignored.append({**i, "motivo": e.get("motivo", ""), "ignorada_desde": e.get("fecha", "")})
+        else:
+            keep.append(i)
+    report["issues"], report["ignoradas"] = keep, ignored
+    left = {(i["ad_id"], i.get("campo")) for i in keep}
+    by_id = {a["id"]: a for a in report["anuncios"]}
+    for i in ignored:
+        a = by_id.get(i["ad_id"])
+        if a and i.get("campo") and (i["ad_id"], i["campo"]) not in left:
+            a["checks"][i["campo"]] = "ok"
 
 
 def track_history(programs):
@@ -843,6 +884,7 @@ def run(progress=lambda msg: None, use_api=True):
     report = {"generado": dt.datetime.now().isoformat(timespec="seconds"), "cuenta": meta.acct,
               "descuento_vigente": discount, "programas": out_programs,
               "anuncios": out_ads, "issues": uniq, "vision": vision_info}
+    apply_exceptions(report)
     (DATA / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
     progress("Listo")
     return report

@@ -336,7 +336,10 @@ function pageAnuncios() {
 
 function pageAlertas() {
   const l = sortIssues(R.issues.filter((i) => i.control === 'Alertas' || i.severidad === 'warn'));
-  return `${pageHead('Alertas', 'Puntos para <em>revisar</em>.', 'No son errores contra el sheet, pero pueden dejar algo desactualizado o sin rendimiento.', jiraBtn('revisar'))}${issuesTable(l)}`;
+  const ign = R.ignoradas || [];
+  return `${pageHead('Alertas', 'Puntos para <em>revisar</em>.', 'No son errores contra el sheet, pero pueden dejar algo desactualizado o sin rendimiento.', jiraBtn('revisar'))}${issuesTable(l)}
+    ${ign.length ? `<details style="margin-top:24px"><summary class="muted" style="cursor:pointer"><i class="ti ti-eye-off"></i> ${ign.length} observaci${ign.length > 1 ? 'ones' : 'ón'} ignorada${ign.length > 1 ? 's' : ''}: revisadas por el equipo y correctas así (casos puntuales)</summary>
+      <div style="margin-top:12px">${issuesTable(sortIssues(ign))}</div></details>` : ''}`;
 }
 
 // ------------------------------------------------------------ metodología: qué se considera correcto
