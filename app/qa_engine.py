@@ -598,10 +598,13 @@ def run(progress=lambda msg: None, use_api=True):
 
     issues = []
 
-    def issue(control, sev, ad, sigla, detalle, campo=None):
+    def issue(control, sev, ad, sigla, detalle, campo=None, bloquea=False):
         if ad and ad["id"] in prep_ids:  # anuncio en preparación: va a su checklist, no al reporte
             prep_issues[ad["id"]].append({"control": control, "severidad": sev, "detalle": detalle})
-            return
+            if not bloquea:
+                return
+            # lo que impide prenderlo (landing equivocada) sale igual como error en el reporte
+            detalle = f"Pausado, por prender — no prender así. {detalle}"
         issues.append({"control": control, "severidad": sev, "ad_id": ad["id"] if ad else "",
                        "ad_name": ad["name"] if ad else "", "sigla": sigla or "",
                        "detalle": detalle, "campo": campo,
@@ -707,25 +710,30 @@ def run(progress=lambda msg: None, use_api=True):
                     continue
                 u = urllib.parse.urlparse(url)
                 q = dict(urllib.parse.parse_qsl(u.query))
-                errs, warns = [], []
+                # La URL raíz (landing) distinta a Creatividad 2027 es error; las UTM distintas, aviso.
+                errs, utms, warns = [], [], []
                 base_got = f"{u.scheme}://{u.netloc}{u.path}".rstrip("/")
                 if c["url_base"] and base_got != c["url_base"].rstrip("/"):
-                    errs.append(f"landing {base_got} (esperada {c['url_base']})")
-                for k in ("ref", "utm_source", "utm_medium", "utm_campaign"):
-                    if c[k] and q.get(k) != c[k]:
-                        errs.append(f"{k}={q.get(k) or '—'} (esperado {c[k]})")
-                # utm_term: img / video; con número (video2, img3) es otra pieza diferenciada, es válido
-                term = q.get("utm_term") or ""
-                if fmt in ("img", "video") and not re.fullmatch(rf"{fmt}\d*", term):
-                    errs.append(f"utm_term={term or '—'} (esperado {fmt})")
+                    vieja = " — es la landing de la campaña 2026" if "/landings/meta/" in u.path else ""
+                    errs.append(f"landing {base_got} (esperada {c['url_base']}){vieja}")
                 lnd = landing.get(url)
                 if lnd and (lnd["status"] >= 400 or lnd["status"] == 0):
                     errs.append(f"la landing responde {lnd['status'] or 'sin conexión'}")
                 elif lnd and urllib.parse.urlparse(lnd["final_url"]).path.rstrip("/") != u.path.rstrip("/"):
                     warns.append(f"la landing redirige a {lnd['final_url'][:90]}")
+                for k in ("ref", "utm_source", "utm_medium", "utm_campaign"):
+                    if c[k] and q.get(k) != c[k]:
+                        utms.append(f"{k}={q.get(k) or '—'} (esperado {c[k]})")
+                # utm_term: img / video; con número (video2, img3) es otra pieza diferenciada, es válido
+                term = q.get("utm_term") or ""
+                if fmt in ("img", "video") and not re.fullmatch(rf"{fmt}\d*", term):
+                    utms.append(f"utm_term={term or '—'} (esperado {fmt})")
                 if errs:
                     ck["url"] = "error"
-                    issue("URL", "error", a, sig, f"URL{where}: " + "; ".join(errs), "url")
+                    issue("URL", "error", a, sig, f"URL{where}: " + "; ".join(errs), "url", bloquea=True)
+                if utms:
+                    ck["url"] = ck["url"] if ck["url"] == "error" else "warn"
+                    issue("URL", "warn", a, sig, f"UTM{where}: " + "; ".join(utms), "url")
                 if warns:
                     ck["url"] = ck["url"] if ck["url"] == "error" else "warn"
                     issue("URL", "warn", a, sig, f"URL{where}: " + "; ".join(warns), "url")
