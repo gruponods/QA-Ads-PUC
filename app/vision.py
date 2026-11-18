@@ -150,7 +150,7 @@ def apply(ads, programs, discount, issue, api_key=None):
 def _evaluate(ad, v, res, p, discount, issue, es_video):
     c = p.get("creatividad") or {}
     discount = p.get("descuento") or discount  # descuento propio del programa (p. ej. DEIA 25%)
-    dcto_txt = c.get("precio_dcto") or p.get("precio_dcto_calc") or ""
+    dcto_txt = p.get("precio_dcto_calc") or c.get("precio_dcto") or ""
     ref = {"id": ad["id"], "name": ad["name"]}
     where = f" ({v['ubicacion']})" if len(ad["variantes"]) > 1 else ""
     fuente = "el video" if es_video else "la pieza"
@@ -162,7 +162,10 @@ def _evaluate(ad, v, res, p, discount, issue, es_video):
         state = peor(state)
         issue("Pieza", grave, ref, ad["sigla"],
               f"{fuente.capitalize()}{where} no parece ser de {p['programa']} (dice: «{res['programa_en_pieza'] or '—'}»)", "pieza")
-    esperados = {digits(c.get(k)) for k in ("precio_lista", "precio_dcto", "usd_lista", "usd_dcto")} | {digits(dcto_txt)}
+    # el precio con descuento del sheet solo cuenta si coincide con el descuento del programa
+    cols = ("precio_lista", "usd_lista") if digits(c.get("precio_dcto")) != digits(dcto_txt) else (
+        "precio_lista", "precio_dcto", "usd_lista", "usd_dcto")
+    esperados = {digits(c.get(k)) for k in cols} | {digits(dcto_txt)}
     esperados -= {""}
     vistos = {digits(x) for x in res["precios"]} - {""}
     if vistos and esperados and vistos - esperados:

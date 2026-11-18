@@ -292,7 +292,11 @@ def program_discount(c, default):
     if not d and lista and dcto:
         d = str(round(100 * (1 - int(dcto) / int(lista))))
     d = d or default
-    calc = c.get("precio_dcto") or (f"${int(lista) * (100 - int(d)) // 100:,}".replace(",", ".") if lista else "")
+    calc = f"${int(lista) * (100 - int(d)) // 100:,}".replace(",", ".") if lista else ""
+    # el precio con descuento del sheet vale si corresponde a ese descuento; si no (p. ej. DEIA tiene
+    # 25% pero la columna trae el precio con 35%), se usa el calculado
+    if dcto and (not lista or abs(int(dcto) - int(digits(calc))) <= int(lista) // 100):
+        calc = c.get("precio_dcto")
     return d, calc
 
 
@@ -748,7 +752,9 @@ def run(progress=lambda msg: None, use_api=True):
                         issue("Ubicaciones", "error", a, sig,
                               f"El {label} no es el mismo en todas las ubicaciones "
                               f"({' / '.join(v['ubicacion'] for v in variants)})")
-            if not any(v["ubicacion"] == "Stories y Reels" for v in variants) and len(variants) == 1:
+            # los videos vienen en una sola versión para todas las ubicaciones (así los entrega el cliente): no se alerta
+            if (not any(v["ubicacion"] == "Stories y Reels" for v in variants) and len(variants) == 1
+                    and not variants[0].get("video_id")):
                 issue("Alertas", "warn", a, sig, "Sin pieza específica para Stories y Reels (una sola versión para todo)")
 
         # 4. mejoras automáticas: desactivado. Lo que devuelve la API (creative_features_spec) no coincide
